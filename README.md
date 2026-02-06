@@ -1,6 +1,6 @@
-# 📕 MT Note: Decentralized Bookkeeping for Mantle
+# 📘 KnurFi: The Context Layer for On-Chain Finance
 
-**MT Note** is a privacy-first browser extension that allows users to attach encrypted, permanent notes to any transaction on the Mantle Network.
+**KnurFi** is a multi-chain treasury dashboard that lets teams attach encrypted, permanent notes to on-chain transactions.
 
 ![Dashboard Screenshot](docs/dashboard.png)
 
@@ -8,11 +8,11 @@
 Blockchain transactions are cryptic. Months after a transaction, users forget why they sent 500 MNT to `0x7a...9b`. Existing solutions are centralized (data loss risk) or public (privacy risk).
 
 ## 💡 The Solution
-MT Note injects a "Bookkeeping Layer" directly into the block explorer.
+KnurFi injects a "Context Layer" directly into the block explorer and dashboard workflows.
 * **Write:** Add notes to any tx on MantleScan.
 * **Encrypt:** Notes are AES-encrypted with your wallet signature (Client-Side).
 * **Store:** Encrypted data is stored on-chain (Mantle Sepolia).
-* **Manage:** A dedicated Dashboard to view, search, and export your financial history.
+* **Manage:** A dedicated Dashboard to view, search, and export your treasury history.
 
 ## 🛠️ Tech Stack
 * **Frontend:** HTML/JS, Chrome Extension Manifest V3
@@ -46,7 +46,7 @@ Go to `Mantle Sepolia Explorer`.
 Open `docs/dashboard.html` in your browser (via Live Server) or visit the live link below.
 
 🔗 Links
-Live Demo: https://zh0403.github.io/mt-note/dashboard.html
+Live Demo: https://zh0403.github.io/KnurFi/dashboard.html
 
 Demo Video: 
 

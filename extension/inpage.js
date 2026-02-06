@@ -18,7 +18,7 @@ async function getEncryptionKey(signer) {
 
     // 1. Ask user to sign a static message
     // This signature acts as their "password" but they don't have to remember it!
-    const msg = "UNLOCK_MT_NOTE"; // Keep it simple!
+const msg = "UNLOCK_KNURFI"; // Keep it simple!
     const signature = await signer.signMessage(msg);
 
     // 2. Turn that signature into a usable AES key
@@ -42,7 +42,7 @@ function decryptData(ciphertext, key) {
 }
 
 async function init() {
-    console.log("📕 MT Note: Initializing...");
+    console.log("📘 KnurFi: Initializing...");
 
     // --- NEW: Add Global Styles for Animations ---
     const styleTag = document.createElement('style');
@@ -118,7 +118,7 @@ async function init() {
             <h3 style="margin: 0; display: flex; align-items: center; gap: 10px; font-size: 16px;">
                 <img src="${ICON_URL}" style="width: 24px; height: 24px;">
                 
-                <span style="background: linear-gradient(90deg, #65b3ad, #38b2ac); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;">MT Note</span>
+                <span style="background: linear-gradient(90deg, #2563eb, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;">KnurFi</span>
             </h3>
             <span id="mt-status" style="font-size: 11px; color: #94a3b8; font-family: monospace;">● System Ready</span>
         </div>

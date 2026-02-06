@@ -10,10 +10,13 @@ let currentDecryptKey = null;
 // Wire up buttons
 const connectButton = document.getElementById('connect-btn');
 const unlockButton = document.getElementById('unlock-btn');
-const navDashboard = document.getElementById('nav-dashboard');
-const navSettings = document.getElementById('nav-settings');
-const tabDashboard = document.getElementById('tab-dashboard');
+const navItems = document.querySelectorAll('.nav-item[data-tab]');
+const tabOverview = document.getElementById('tab-overview');
+const tabPayouts = document.getElementById('tab-payouts');
+const tabBridge = document.getElementById('tab-bridge');
 const tabSettings = document.getElementById('tab-settings');
+const pageTitle = document.getElementById('page-title');
+const pageSubtitle = document.getElementById('page-subtitle');
 const downloadCsvButton = document.getElementById('download-csv-btn');
 
 connectButton.onclick = initDashboard;
@@ -22,9 +25,10 @@ if (unlockButton) {
     unlockButton.onclick = unlockNotes;
 }
 
-if (navDashboard && navSettings && tabDashboard && tabSettings) {
-    navDashboard.onclick = () => switchTab('dashboard');
-    navSettings.onclick = () => switchTab('settings');
+if (navItems && tabOverview && tabSettings) {
+    navItems.forEach(item => {
+        item.onclick = () => switchTab(item.dataset.tab);
+    });
 }
 
 if (downloadCsvButton) {
@@ -132,7 +136,7 @@ async function unlockNotes() {
         updateStatus("✍️ Please sign the message to generate your decryption key...");
         
         // 1. Get Key
-        const msg = "UNLOCK_MT_NOTE";
+        const msg = "UNLOCK_KNURFI";
         const signature = await signer.signMessage(msg);
 
         // Debugging: Print the key to console to verify
@@ -226,18 +230,43 @@ function updateStatus(msg) {
 }
 
 function switchTab(tab) {
-    if (!navDashboard || !navSettings || !tabDashboard || !tabSettings) return;
+    const tabs = {
+        overview: tabOverview,
+        payouts: tabPayouts,
+        bridge: tabBridge,
+        settings: tabSettings
+    };
 
-    if (tab === 'dashboard') {
-        navDashboard.classList.add('active');
-        navSettings.classList.remove('active');
-        tabDashboard.style.display = '';
-        tabSettings.style.display = 'none';
-    } else {
-        navDashboard.classList.remove('active');
-        navSettings.classList.add('active');
-        tabDashboard.style.display = 'none';
-        tabSettings.style.display = '';
+    const titles = {
+        overview: {
+            title: "Overview",
+            subtitle: "Context layer for on-chain finance."
+        },
+        payouts: {
+            title: "Payouts",
+            subtitle: "Batch compliance notes for Arc USDC payouts."
+        },
+        bridge: {
+            title: "Bridge",
+            subtitle: "Attach cross-chain memos to every transfer."
+        },
+        settings: {
+            title: "Settings",
+            subtitle: "Export data and manage admin controls."
+        }
+    };
+
+    Object.entries(tabs).forEach(([key, el]) => {
+        if (el) el.style.display = key === tab ? "" : "none";
+    });
+
+    navItems.forEach(item => {
+        item.classList.toggle('active', item.dataset.tab === tab);
+    });
+
+    if (pageTitle && pageSubtitle && titles[tab]) {
+        pageTitle.innerText = titles[tab].title;
+        pageSubtitle.innerText = titles[tab].subtitle;
     }
 }
 
@@ -296,7 +325,7 @@ function downloadLedgerAsCsv() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "my_mantle_ledger.csv";
+    a.download = "knurfi_ledger.csv";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

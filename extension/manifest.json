@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "mt_note",
+    "name": "KnurFi",
     "version": "1.0",
-    "description": "Decentralized notes for Mantle transactions.",
+    "description": "Context layer for on-chain finance with encrypted notes.",
 
     "icons": {
       "16": "icon.png",

@@ -2,15 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>MT Note | Decentralized Ledger</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KnurFi | Treasury Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
-            --bg-dark: #0f1214;
-            --bg-card: #1a1d1f;
-            --primary: #65b3ad;
+            --bg-dark: #0b1120;
+            --bg-card: #111827;
+            --primary: #2563eb;
+            --primary-strong: #1d4ed8;
+            --accent-gold: #f59e0b;
             --text-main: #ffffff;
             --text-muted: #94a3b8;
-            --border: #333;
+            --border: #1f2937;
         }
 
         body {
@@ -34,13 +38,30 @@
         }
         
         .brand {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 800;
-            color: var(--primary);
+            color: var(--text-main);
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 40px;
+            margin-bottom: 28px;
+        }
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.1;
+        }
+
+        .brand-name {
+            color: var(--primary);
+            letter-spacing: 0.4px;
+        }
+
+        .brand-tagline {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
         }
         
         .nav-item {
@@ -58,7 +79,7 @@
         }
         
         .nav-item:hover, .nav-item.active {
-            background: rgba(101, 179, 173, 0.1);
+            background: rgba(37, 99, 235, 0.12);
             color: var(--primary);
         }
 
@@ -82,7 +103,7 @@
 
         .btn {
             background: var(--primary);
-            color: #000;
+            color: #ffffff;
             border: none;
             padding: 10px 24px;
             border-radius: 8px;
@@ -120,16 +141,16 @@
         }
         
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 15px 20px; background: #22262a; color: var(--text-muted); font-size: 12px; text-transform: uppercase; }
+        th { text-align: left; padding: 15px 20px; background: #1f2937; color: var(--text-muted); font-size: 12px; text-transform: uppercase; }
         td { padding: 15px 20px; border-bottom: 1px solid var(--border); font-size: 14px; }
         tr:last-child td { border-bottom: none; }
-        tr:hover { background: #22262a; }
+        tr:hover { background: #1f2937; }
         
         a { color: var(--primary); text-decoration: none; }
         a:hover { text-decoration: underline; }
         
         /* Utility */
-                .tag-pill { background: #2d3748; padding: 2px 8px; border-radius: 12px; font-size: 11px; color: #cbd5e1; }
+                .tag-pill { background: #1f2937; padding: 2px 8px; border-radius: 12px; font-size: 11px; color: #cbd5e1; }
 
         /* Settings / Admin */
         .settings-section {
@@ -139,8 +160,8 @@
             gap: 16px;
         }
         .admin-zone {
-            border: 1px solid #facc15;
-            box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.2);
+            border: 1px solid var(--accent-gold);
+            box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.2);
         }
     </style>
 </head>
@@ -149,10 +170,15 @@
     <div class="sidebar">
         <div class="brand">
             <img src="icon.png" style="width: 28px; height: 28px;">
-            MT Note
+            <div class="brand-text">
+                <div class="brand-name">KnurFi</div>
+                <div class="brand-tagline">Know Your Finance</div>
+            </div>
         </div>
-        <a id="nav-dashboard" class="nav-item active">📊 Dashboard</a>
-        <a id="nav-settings" class="nav-item">⚙️ Settings</a>
+        <a id="nav-overview" class="nav-item active" data-tab="overview">📊 Overview</a>
+        <a id="nav-payouts" class="nav-item" data-tab="payouts">💸 Payouts</a>
+        <a id="nav-bridge" class="nav-item" data-tab="bridge">🌉 Bridge</a>
+        <a id="nav-settings" class="nav-item" data-tab="settings">⚙️ Settings</a>
         <a class="nav-item" href="https://mantle.xyz" target="_blank">🌐 Mantle Eco</a>
         <div style="flex-grow:1"></div>
         <div style="font-size:11px; color:#555;">v1.0.0 (Hackathon Build)</div>
@@ -161,8 +187,8 @@
     <div class="main">
         <div class="header">
             <div class="page-title">
-                <h2>My Ledger</h2>
-                <p>Manage and track your decentralized notes.</p>
+                <h2 id="page-title">Overview</h2>
+                <p id="page-subtitle" class="text-slate-400 text-sm">Context layer for on-chain finance.</p>
             </div>
             <div style="display:flex; gap:10px; align-items:center;">
                 <button id="unlock-btn" class="btn btn-outline" style="display:none;">Unlock Notes</button>
@@ -170,8 +196,8 @@
             </div>
         </div>
 
-        <!-- Dashboard Tab -->
-        <div id="tab-dashboard">
+        <!-- Overview Tab -->
+        <div id="tab-overview">
             <div class="stats-grid">
                 <div class="card">
                     <h4>Total Notes</h4>
@@ -183,11 +209,11 @@
                 </div>
                 <div class="card">
                     <h4>Est. Gas Saved</h4>
-                    <div class="value" style="color: #65b3ad;">∞</div>
+                    <div class="value" style="color: var(--accent-gold);">∞</div>
                 </div>
             </div>
 
-            <div id="status-bar" style="margin-bottom: 20px; padding: 15px; background: #1e2327; border-radius: 8px; border: 1px solid #333; display: none; color: #fbbf24;"></div>
+            <div id="status-bar" style="margin-bottom: 20px; padding: 15px; background: #0f172a; border-radius: 8px; border: 1px solid var(--border); display: none; color: var(--accent-gold);"></div>
 
             <div class="ledger-container">
                 <table>
@@ -207,6 +233,50 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Payouts Tab -->
+        <div id="tab-payouts" style="display:none;">
+            <div class="card">
+                <h4>Batch USDC Payouts (Arc)</h4>
+                <p class="text-slate-400 text-sm" style="margin-top:6px;">
+                    Upload a CSV, attach a compliance memo, and execute batch payouts on Arc.
+                </p>
+                <div class="mt-4 flex flex-wrap gap-3">
+                    <button class="btn">Upload CSV</button>
+                    <button class="btn btn-outline">Attach Memo</button>
+                </div>
+            </div>
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="card">
+                    <h4>Recipients</h4>
+                    <p class="text-slate-400 text-sm" style="margin-top:6px;">No file loaded yet.</p>
+                </div>
+                <div class="card">
+                    <h4>Compliance Note</h4>
+                    <p class="text-slate-400 text-sm" style="margin-top:6px;">Add a single memo for the entire batch.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bridge Tab -->
+        <div id="tab-bridge" style="display:none;">
+            <div class="card">
+                <h4>Cross-Chain Bridge</h4>
+                <p class="text-slate-400 text-sm" style="margin-top:6px;">
+                    Bridge assets with an attached cross-chain memo for audit trails.
+                </p>
+                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="card">
+                        <h4>Cross-Chain Memo</h4>
+                        <p class="text-slate-400 text-sm" style="margin-top:6px;">Describe the source and destination intent.</p>
+                    </div>
+                    <div class="card">
+                        <h4>Bridge Activity</h4>
+                        <p class="text-slate-400 text-sm" style="margin-top:6px;">No bridge activity recorded yet.</p>
+                    </div>
+                </div>
             </div>
         </div>
 
