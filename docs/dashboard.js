@@ -200,7 +200,7 @@ function renderTable(events, key) {
 
         // Format Tx Hash link
         const shortHash = txHash.slice(0, 6) + "..." + txHash.slice(-4);
-        const link = `https://sepolia.mantlescan.xyz/tx/${txHash}`;
+        const link = `https://sepolia.etherscan.io/tx/${txHash}`;
 
         const row = `
             <tr>
@@ -344,12 +344,12 @@ function setupAdminZone() {
         </p>
         <div style="margin-top:10px; display:flex; flex-direction:column; gap:12px;">
             <div>
-                <div style="font-size:12px; color:var(--text-muted);">Contract Balance (MNT)</div>
+                <div style="font-size:12px; color:var(--text-muted);">Contract Balance (ETH)</div>
                 <div id="admin-balance" style="font-size:18px; margin-top:4px;">Loading...</div>
             </div>
             <div>
                 <label for="admin-fee-input" style="font-size:12px; color:var(--text-muted); display:block; margin-bottom:4px;">
-                    Update Fee (MNT)
+                    Update Fee (ETH)
                 </label>
                 <div style="display:flex; gap:8px; align-items:center;">
                     <input id="admin-fee-input" type="number" min="0" step="0.0001"
@@ -368,7 +368,7 @@ function setupAdminZone() {
         provider.getBalance(CONTRACT_ADDRESS).then(bn => {
             const mnt = Number(ethers.formatEther(bn));
             const el = document.getElementById('admin-balance');
-            if (el) el.innerText = mnt.toFixed(4) + " MNT";
+            if (el) el.innerText = mnt.toFixed(4) + " ETH";
         }).catch(err => console.warn("Failed to load balance", err));
     }
 
@@ -384,7 +384,7 @@ function setupAdminZone() {
             }
             const val = feeInput.value;
             if (!val) {
-                alert("Enter a fee amount in MNT.");
+                alert("Enter a fee amount in ETH.");
                 return;
             }
             try {

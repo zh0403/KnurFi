@@ -216,7 +216,7 @@ async function saveNote(txHash) {
         }
         status.classList.remove('mt-loading');
 
-        status.style.color = "#65b3ad"; // Mantle Green
+        status.style.color = "#2563eb"; // KnurFi Blue
         input.value = "";
         
         // Wait 2 seconds before refreshing to let the node catch up
@@ -303,16 +303,16 @@ async function getContract() {
     // Request Account Access
     await provider.send("eth_requestAccounts", []);
     
-    // Check Network (Chain ID 5003 is Mantle Sepolia)
+    // Check Network (Chain ID 11155111 is Ethereum Sepolia)
     const network = await provider.getNetwork();
-    if (network.chainId !== 5003n) {
+    if (network.chainId !== 11155111n) {
         try {
             await window.ethereum.request({
                 method: 'wallet_switchEthereumChain',
-                params: [{ chainId: '0x138b' }], // 5003 in hex
+                params: [{ chainId: '0xaa36a7' }], // 11155111 in hex
             });
         } catch (e) {
-            alert("Please switch MetaMask to Mantle Sepolia Testnet!");
+            alert("Please switch MetaMask to Ethereum Sepolia Testnet!");
             throw e;
         }
     }

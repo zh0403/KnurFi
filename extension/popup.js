@@ -10,11 +10,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 2. Quick Link: Go to MantleScan
-    const btnMantle = document.getElementById('go-mantle');
-    if (btnMantle) {
-        btnMantle.addEventListener('click', () => {
-            chrome.tabs.create({ url: 'https://sepolia.mantlescan.xyz/' });
+    // 2. Quick Link: Go to Sepolia Explorer
+    const btnExplorer = document.getElementById('go-explorer');
+    if (btnExplorer) {
+        btnExplorer.addEventListener('click', () => {
+            chrome.tabs.create({ url: 'https://sepolia.etherscan.io/' });
         });
     }
 

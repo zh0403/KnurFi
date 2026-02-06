@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 
 async function main() {
-  console.log("🚀 Deploying mt_note to Mantle Sepolia...");
+  console.log("🚀 Deploying mt_note to Ethereum Sepolia...");
 
   const mt_noteFactory = await hre.ethers.getContractFactory("mt_note");
   const mt_note = await mt_noteFactory.deploy();

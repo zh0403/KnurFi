@@ -22,7 +22,7 @@ contract mt_note is Ownable {
     function addNote(bytes32 _txHash, string calldata _ipfsCid) external payable {
         require(bytes(_ipfsCid).length > 0, "CID cannot be empty");
         
-        // 💰 The Money Maker: Check if user sent enough MNT
+        // 💰 The Money Maker: Check if user sent enough ETH
         require(msg.value >= noteFee, "Insufficient fee sent");
 
         userNotes[msg.sender][_txHash] = _ipfsCid;
@@ -32,7 +32,7 @@ contract mt_note is Ownable {
 
     // --- Admin Functions (For You) ---
     
-    // 1. Change the price later (e.g., set to 0.1 MNT after hackathon)
+    // 1. Change the price later (e.g., set to 0.0005 ETH after hackathon)
     function setFee(uint256 _newFee) external onlyOwner {
         noteFee = _newFee;
         emit FeeUpdated(_newFee);

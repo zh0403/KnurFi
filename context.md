@@ -34,9 +34,9 @@ We are engineering one cohesive product to compete for four specific prize track
 
 * **Frontend (Dashboard):** Vanilla JS / HTML / CSS (Migrating to Tailwind CSS for UI polish).
 * **Web3 Libraries:** `ethers.js` (v6) for blockchain interaction, `ensjs` for ENS features.
-* **Smart Contracts:** Solidity (Hardhat framework). We will reuse and modify the existing `MantleLog.sol` structure for multi-chain deployment.
+* **Smart Contracts:** Solidity (Hardhat framework). We will reuse and modify the existing logging contract structure for multi-chain deployment.
 * **Storage:**
-    * *On-Chain:* Encrypted note hashes stored in smart contracts on respective chains (Arc, Mantle, Sepolia).
+    * *On-Chain:* Encrypted note hashes stored in smart contracts on respective chains (Arc, Sepolia).
     * *ENS:* Critical metadata stored in ENS Text Records.
     * *Local:* User's browser storage for encrypted data cache.
 * **Security:** Client-side AES encryption (using wallet signature as key) via `crypto-js`.

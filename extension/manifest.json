@@ -17,14 +17,14 @@
 
     "content_scripts": [
       {
-        "matches": ["https://sepolia.mantlescan.xyz/tx/*", "https://mantlescan.xyz/tx/*"],
+        "matches": ["https://sepolia.etherscan.io/tx/*"],
         "js": ["content.js"],
         "run_at": "document_end"
       }
     ],
     
     "permissions": ["storage"],
-    "host_permissions": ["https://sepolia.mantlescan.xyz/*", "https://mantlescan.xyz/*"],
+    "host_permissions": ["https://sepolia.etherscan.io/*"],
     "web_accessible_resources": [
       {
         "resources": ["ethers.js", "crypto-js.js", "abi.js", "inpage.js", "icon.png"],
