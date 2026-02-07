@@ -27,6 +27,7 @@ const overviewEmptyCard = document.getElementById('overview-empty-card');
 const overviewEmptyText = document.getElementById('overview-empty-text');
 const payoutsFileInput = document.getElementById('payouts-file');
 const payoutsUploadButton = document.getElementById('payouts-upload-btn');
+const payoutsTemplateButton = document.getElementById('payouts-template-btn');
 const payoutsClearButton = document.getElementById('payouts-clear-btn');
 const payoutsFileName = document.getElementById('payouts-file-name');
 const payoutsPreview = document.getElementById('payouts-preview');
@@ -216,6 +217,10 @@ function initializePayouts() {
 
     if (payoutsClearButton) {
         payoutsClearButton.onclick = clearPayouts;
+    }
+
+    if (payoutsTemplateButton) {
+        payoutsTemplateButton.onclick = downloadPayoutTemplate;
     }
 
     if (payoutsSubmitButton) {
@@ -498,6 +503,25 @@ function clearPayouts() {
     if (payoutsPreview) payoutsPreview.textContent = "No file loaded yet.";
     if (payoutsSummary) payoutsSummary.textContent = "";
     setPayoutStatus("");
+}
+
+function downloadPayoutTemplate() {
+    const header = "address,amount\n";
+    const rows = [
+        "0x1111111111111111111111111111111111111111,1.25",
+        "0x2222222222222222222222222222222222222222,0.5",
+        "0x3333333333333333333333333333333333333333,10"
+    ];
+    const csvContent = header + rows.join("\n") + "\n";
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "knurfi_payouts_template.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
 function renderPayoutPreview() {
