@@ -267,6 +267,7 @@ async function initDashboard() {
     
     try {
         await ensureWalletChain();
+        await requestAccountSelection();
         await provider.send("eth_requestAccounts", []);
         signer = await provider.getSigner();
         currentAddress = await signer.getAddress();
@@ -354,6 +355,19 @@ async function initDashboard() {
     } catch (err) {
         console.error(err);
         updateStatus("Connection Error: " + (err.reason || err.message));
+    }
+}
+
+async function requestAccountSelection() {
+    if (!window.ethereum || !window.ethereum.request) return;
+    try {
+        await window.ethereum.request({
+            method: "wallet_requestPermissions",
+            params: [{ eth_accounts: {} }]
+        });
+    } catch (e) {
+        // If user rejects or provider doesn't support it, fallback to eth_requestAccounts
+        console.warn("Account selection not available.", e);
     }
 }
 
