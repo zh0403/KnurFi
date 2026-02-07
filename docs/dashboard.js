@@ -47,6 +47,7 @@ const payoutsModalBody = document.getElementById('payouts-modal-body');
 const payoutsModalClose = document.getElementById('payouts-modal-close');
 const payoutsBatchesList = document.getElementById('payouts-batches-list');
 const payoutsBatchesRefresh = document.getElementById('payouts-batches-refresh');
+const payoutsBatchesToggle = document.getElementById('payouts-batches-toggle');
 
 const ensNameEl = document.getElementById('ens-name');
 const ensRecordValueEl = document.getElementById('ens-record-value');
@@ -56,9 +57,13 @@ const ensReadButton = document.getElementById('ens-read-btn');
 const ensWriteButton = document.getElementById('ens-write-btn');
 const ensStatus = document.getElementById('ens-status');
 const ensTxLink = document.getElementById('ens-tx-link');
+const ensCopyNameButton = document.getElementById('ens-copy-name');
+const ensCopyRecordButton = document.getElementById('ens-copy-record');
+const ensGenerateHashButton = document.getElementById('ens-generate-hash');
+const ensRecordUpdated = document.getElementById('ens-record-updated');
 
 const ENS_RECORD_KEY = "com.knurfi.metadata";
-const MAINNET_RPC_URL = "https://cloudflare-eth.com";
+const ENS_RPC_URL = "https://rpc.sepolia.org";
 let ensNameCache = null;
 
 let payoutRecipients = [];
@@ -240,12 +245,52 @@ function setEnsStatus(message, isError) {
     }
 }
 
-function getEnsReadProvider() {
-    return new ethers.JsonRpcProvider(MAINNET_RPC_URL);
+function updateEnsWriteState() {
+    if (!ensWriteButton) return;
+    const hasName = ensNameCache && ensNameCache.length > 0;
+    const enabled = !!hasName;
+    ensWriteButton.disabled = !enabled;
+    ensWriteButton.style.opacity = enabled ? "1" : "0.6";
 }
 
-async function ensureMainnetWalletChain() {
-    const hexChainId = "0x1";
+function copyEnsValue(value) {
+    if (!value || value === "-" || value === "Not resolved" || value === "No ENS name found") {
+        setEnsStatus("Nothing to copy yet.", true);
+        return;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(value).then(() => {
+            setEnsStatus("Copied to clipboard.");
+        }).catch(() => setEnsStatus("Failed to copy.", true));
+    } else {
+        setEnsStatus("Clipboard not available.", true);
+    }
+}
+
+function generateEnsHash() {
+    if (!ensRecordInput) return;
+    const text = ensRecordInput.value.trim();
+    if (!text) {
+        setEnsStatus("Enter text to hash first.", true);
+        return;
+    }
+    const hash = ethers.keccak256(ethers.toUtf8Bytes(text));
+    ensRecordInput.value = hash;
+    setEnsStatus("Hash generated.");
+}
+
+function validateEnsRecordValue(value) {
+    if (!value) return "Enter a value to write.";
+    if (value.startsWith("0x") && value.length === 66) return null;
+    return "Record value should be a 32-byte hash (0x + 64 hex chars).";
+}
+
+function getEnsReadProvider() {
+    return new ethers.JsonRpcProvider(ENS_RPC_URL);
+}
+
+async function ensureEnsWalletChain() {
+    const hexChainId = "0xaa36a7";
     try {
         await window.ethereum.request({
             method: "wallet_switchEthereumChain",
@@ -257,10 +302,10 @@ async function ensureMainnetWalletChain() {
                 method: "wallet_addEthereumChain",
                 params: [{
                     chainId: hexChainId,
-                    chainName: "Ethereum Mainnet",
-                    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-                    rpcUrls: [MAINNET_RPC_URL],
-                    blockExplorerUrls: ["https://etherscan.io"]
+                    chainName: "Ethereum Sepolia",
+                    nativeCurrency: { name: "Sepolia ETH", symbol: "ETH", decimals: 18 },
+                    rpcUrls: [ENS_RPC_URL],
+                    blockExplorerUrls: ["https://sepolia.etherscan.io"]
                 }]
             });
         } else {
@@ -269,16 +314,16 @@ async function ensureMainnetWalletChain() {
     }
 }
 
-async function getMainnetSigner() {
+async function getEnsSigner() {
     const eth = await waitForEthereum();
     if (!eth) {
         showMetaMaskError();
         return null;
     }
-    await ensureMainnetWalletChain();
-    const mainProvider = new ethers.BrowserProvider(window.ethereum);
-    await mainProvider.send("eth_requestAccounts", []);
-    return mainProvider.getSigner();
+    await ensureEnsWalletChain();
+    const ensProvider = new ethers.BrowserProvider(window.ethereum);
+    await ensProvider.send("eth_requestAccounts", []);
+    return ensProvider.getSigner();
 }
 
 async function resolveEnsName() {
@@ -293,11 +338,13 @@ async function resolveEnsName() {
             ensNameCache = null;
             if (ensNameEl) ensNameEl.textContent = "No ENS name found";
             setEnsStatus("No ENS name found for this address.");
+            updateEnsWriteState();
             return;
         }
         ensNameCache = name;
         if (ensNameEl) ensNameEl.textContent = name;
         setEnsStatus("ENS name resolved.");
+        updateEnsWriteState();
     } catch (e) {
         setEnsStatus("Failed to resolve ENS name.", true);
     }
@@ -322,6 +369,7 @@ async function readEnsRecord() {
         const value = await resolver.getText(ENS_RECORD_KEY);
         if (ensRecordValueEl) ensRecordValueEl.textContent = value || "-";
         setEnsStatus("Record loaded.");
+        if (ensRecordUpdated) ensRecordUpdated.textContent = new Date().toLocaleString();
     } catch (e) {
         setEnsStatus("Failed to read ENS record.", true);
     }
@@ -332,8 +380,22 @@ async function writeEnsRecord() {
         setEnsStatus("Connect your wallet first.", true);
         return;
     }
+    if (window.ethereum && window.ethereum.chainId !== "0xaa36a7") {
+        setEnsStatus("Switching to Ethereum Sepolia...");
+        try {
+            await ensureEnsWalletChain();
+        } catch (e) {
+            setEnsStatus("Please switch to Ethereum Sepolia to write ENS.", true);
+            return;
+        }
+    }
     if (!ensRecordInput || !ensRecordInput.value.trim()) {
         setEnsStatus("Enter a value to write.", true);
+        return;
+    }
+    const validationError = validateEnsRecordValue(ensRecordInput.value.trim());
+    if (validationError) {
+        setEnsStatus(validationError, true);
         return;
     }
     try {
@@ -341,7 +403,7 @@ async function writeEnsRecord() {
             await resolveEnsName();
         }
         if (!ensNameCache) return;
-        const signer = await getMainnetSigner();
+        const signer = await getEnsSigner();
         if (!signer) return;
         const resolver = await signer.provider.getResolver(ensNameCache);
         if (!resolver) {
@@ -354,9 +416,10 @@ async function writeEnsRecord() {
         await tx.wait();
         setEnsStatus("ENS record updated.");
         if (ensTxLink) {
-            ensTxLink.href = `https://etherscan.io/tx/${tx.hash}`;
+            ensTxLink.href = `https://sepolia.etherscan.io/tx/${tx.hash}`;
             ensTxLink.style.display = "inline-flex";
         }
+        if (ensRecordUpdated) ensRecordUpdated.textContent = new Date().toLocaleString();
         await readEnsRecord();
     } catch (e) {
         const raw = (e.shortMessage || e.reason || e.message || "").toLowerCase();
@@ -405,6 +468,9 @@ function initializePayouts() {
     if (payoutsBatchesRefresh) {
         payoutsBatchesRefresh.onclick = loadRecentBatches;
     }
+    if (payoutsBatchesToggle) {
+        payoutsBatchesToggle.onchange = loadRecentBatches;
+    }
 
     if (payoutsMemo) {
         payoutsMemo.oninput = updatePayoutActionsState;
@@ -424,6 +490,19 @@ function initializeEns() {
     }
     if (ensWriteButton) {
         ensWriteButton.onclick = writeEnsRecord;
+    }
+    if (ensCopyNameButton) {
+        ensCopyNameButton.onclick = () => copyEnsValue(ensNameEl && ensNameEl.textContent);
+    }
+    if (ensCopyRecordButton) {
+        ensCopyRecordButton.onclick = () => copyEnsValue(ensRecordValueEl && ensRecordValueEl.textContent);
+    }
+    if (ensGenerateHashButton) {
+        ensGenerateHashButton.onclick = generateEnsHash;
+    }
+    updateEnsWriteState();
+    if (window.ethereum && window.ethereum.on) {
+        window.ethereum.on("chainChanged", () => updateEnsWriteState());
     }
 }
 
@@ -911,7 +990,8 @@ async function loadRecentBatches() {
             ? contract.filters.BatchPayout(currentAddress)
             : contract.filters.BatchPayout();
         const events = await contract.queryFilter(filter, startBlock, "latest");
-        const recent = events.slice(-10).reverse();
+        const limit = payoutsBatchesToggle && payoutsBatchesToggle.checked ? 20 : 10;
+        const recent = events.slice(-limit).reverse();
 
         if (!recent.length) {
             payoutsBatchesList.textContent = "No batch activity yet.";
@@ -926,9 +1006,18 @@ async function loadRecentBatches() {
             const shortTx = txHash.slice(0, 6) + "..." + txHash.slice(-4);
             const shortMemo = memoHash.slice(0, 6) + "..." + memoHash.slice(-4);
             const link = `${config.explorer}/tx/${txHash}`;
-            return `• <a href="${link}" target="_blank" rel="noopener">${shortTx}</a> — ${count} recipients — ${total} USDC — memo ${shortMemo}`;
+            return `• <a href="${link}" target="_blank" rel="noopener">${shortTx}</a> — ${count} recipients — ${total} USDC — memo ${shortMemo} <button class="btn btn-outline" style="padding:2px 8px; margin-left:6px;" data-memo="${memoHash}">Copy memo</button>`;
         });
         payoutsBatchesList.innerHTML = rows.join("<br>");
+        payoutsBatchesList.querySelectorAll("button[data-memo]").forEach(button => {
+            button.onclick = () => {
+                const memo = button.getAttribute("data-memo");
+                if (!memo || !navigator.clipboard) return;
+                navigator.clipboard.writeText(memo).then(() => {
+                    setPayoutStatus("Memo hash copied.");
+                }).catch(() => setPayoutStatus("Failed to copy memo hash.", true));
+            };
+        });
     } catch (e) {
         payoutsBatchesList.textContent = "Failed to load batch history.";
     }

@@ -50,7 +50,7 @@ We are engineering one cohesive product to compete for four specific prize track
 4.  Restructure the dashboard layout to support tabs/sidebar navigation for different features (Overview, Payouts, Bridge).
 
 ### Phase 2: Multi-Chain Infrastructure
-1.  Refactor the codebase to support dynamic provider switching. The user needs to be able to switch between Ethereum Mainnet (for ENS/LI.FI) and Arc Testnet within the dashboard.
+1.  Refactor the codebase to support dynamic provider switching. The dashboard should target Ethereum Sepolia (ENS/ledger) and Arc Testnet (payouts).
 2.  Create a configuration file mapping Chain IDs to their respective RPC URLs and KnurFi contract addresses.
 
 ### Phase 3: The Arc Payouts Tab
