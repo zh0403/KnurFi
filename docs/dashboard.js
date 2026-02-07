@@ -23,6 +23,8 @@ const tabSettings = document.getElementById('tab-settings');
 const pageTitle = document.getElementById('page-title');
 const pageSubtitle = document.getElementById('page-subtitle');
 const downloadCsvButton = document.getElementById('download-csv-btn');
+const overviewEmptyCard = document.getElementById('overview-empty-card');
+const overviewEmptyText = document.getElementById('overview-empty-text');
 
 connectButton.onclick = initDashboard;
 if (unlockButton) {
@@ -68,7 +70,13 @@ function initializeChains() {
 
     if (chainSelect) {
         chainSelect.innerHTML = "";
-        Object.entries(chains).forEach(([key, chain]) => {
+        const entries = Object.entries(chains);
+        if (entries.length <= 1) {
+            chainSelect.style.display = "none";
+        } else {
+            chainSelect.style.display = "";
+        }
+        entries.forEach(([key, chain]) => {
             const option = document.createElement("option");
             option.value = key;
             option.textContent = chain.name;
@@ -188,7 +196,13 @@ async function initDashboard() {
         const contractAddress = getActiveContractAddress();
         if (!contractAddress) {
             isConnected = true;
+            isUnlocked = false;
+            setLedgerEmptyState("Connected. No contract deployed on this network yet.");
+            setOverviewEmptyState("Connect complete. A contract will be deployed on this network soon.");
             updateStatus("No contract configured for this network yet.");
+            if (unlockButton) {
+                unlockButton.style.display = 'none';
+            }
             return;
         }
 
@@ -233,6 +247,7 @@ async function initDashboard() {
 
         // 4. Finally, render the table
         renderTable(allEvents, null); // Render LOCKED initially
+        setOverviewEmptyState("");
 
         // 5. Update buttons and status
         if (unlockButton) {
@@ -294,7 +309,7 @@ function renderTable(events, key) {
     tbody.innerHTML = ""; // Clear current rows
 
     if (events.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No notes found for this wallet.</td></tr>`;
+        setLedgerEmptyState("No notes found for this wallet.");
         return;
     }
 
@@ -354,6 +369,28 @@ function updateStatus(msg) {
     const el = document.getElementById('status-bar');
     el.style.display = 'block';
     el.innerText = msg;
+}
+
+function setLedgerEmptyState(message) {
+    const tbody = document.getElementById('ledger-body');
+    if (!tbody) return;
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="4" style="text-align:center; padding: 40px; color: #555;">
+                ${message}
+            </td>
+        </tr>
+    `;
+}
+
+function setOverviewEmptyState(message) {
+    if (!overviewEmptyCard || !overviewEmptyText) return;
+    if (!message) {
+        overviewEmptyCard.style.display = "none";
+        return;
+    }
+    overviewEmptyText.textContent = message;
+    overviewEmptyCard.style.display = "";
 }
 
 function switchTab(tab) {
@@ -567,14 +604,8 @@ function disconnectWallet() {
     document.getElementById('stat-last').innerText = "-";
 
     // Reset table body to initial message
-    const tbody = document.getElementById('ledger-body');
-    tbody.innerHTML = `
-        <tr>
-            <td colspan="4" style="text-align:center; padding: 40px; color: #555;">
-                Please connect your wallet to view history.
-            </td>
-        </tr>
-    `;
+    setLedgerEmptyState("Please connect your wallet to view history.");
+    setOverviewEmptyState("Connect your wallet to load your ledger.");
 
     // Hide status bar
     const statusBar = document.getElementById('status-bar');
