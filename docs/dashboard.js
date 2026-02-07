@@ -45,6 +45,21 @@ const payoutsPreviewAllButton = document.getElementById('payouts-preview-all-btn
 const payoutsModal = document.getElementById('payouts-modal');
 const payoutsModalBody = document.getElementById('payouts-modal-body');
 const payoutsModalClose = document.getElementById('payouts-modal-close');
+const payoutsBatchesList = document.getElementById('payouts-batches-list');
+const payoutsBatchesRefresh = document.getElementById('payouts-batches-refresh');
+
+const ensNameEl = document.getElementById('ens-name');
+const ensRecordValueEl = document.getElementById('ens-record-value');
+const ensRecordInput = document.getElementById('ens-record-input');
+const ensResolveButton = document.getElementById('ens-resolve-btn');
+const ensReadButton = document.getElementById('ens-read-btn');
+const ensWriteButton = document.getElementById('ens-write-btn');
+const ensStatus = document.getElementById('ens-status');
+const ensTxLink = document.getElementById('ens-tx-link');
+
+const ENS_RECORD_KEY = "com.knurfi.metadata";
+const MAINNET_RPC_URL = "https://cloudflare-eth.com";
+let ensNameCache = null;
 
 let payoutRecipients = [];
 let payoutAmounts = [];
@@ -81,6 +96,7 @@ if (chainSelect) {
 
 initializeChains();
 initializePayouts();
+initializeEns();
 
 function getChains() {
     return window.KNURFI_CHAINS || {};
@@ -214,6 +230,144 @@ function openExplorer() {
     window.open(`${base}/address/${currentAddress}`, "_blank");
 }
 
+function setEnsStatus(message, isError) {
+    if (!ensStatus) return;
+    ensStatus.textContent = message || "";
+    ensStatus.style.color = isError ? "#f87171" : "#94a3b8";
+    if (ensTxLink) {
+        ensTxLink.style.display = "none";
+        ensTxLink.href = "#";
+    }
+}
+
+function getEnsReadProvider() {
+    return new ethers.JsonRpcProvider(MAINNET_RPC_URL);
+}
+
+async function ensureMainnetWalletChain() {
+    const hexChainId = "0x1";
+    try {
+        await window.ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: hexChainId }]
+        });
+    } catch (e) {
+        if (e && e.code === 4902) {
+            await window.ethereum.request({
+                method: "wallet_addEthereumChain",
+                params: [{
+                    chainId: hexChainId,
+                    chainName: "Ethereum Mainnet",
+                    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+                    rpcUrls: [MAINNET_RPC_URL],
+                    blockExplorerUrls: ["https://etherscan.io"]
+                }]
+            });
+        } else {
+            throw e;
+        }
+    }
+}
+
+async function getMainnetSigner() {
+    const eth = await waitForEthereum();
+    if (!eth) {
+        showMetaMaskError();
+        return null;
+    }
+    await ensureMainnetWalletChain();
+    const mainProvider = new ethers.BrowserProvider(window.ethereum);
+    await mainProvider.send("eth_requestAccounts", []);
+    return mainProvider.getSigner();
+}
+
+async function resolveEnsName() {
+    if (!currentAddress) {
+        setEnsStatus("Connect your wallet first.", true);
+        return;
+    }
+    try {
+        const provider = getEnsReadProvider();
+        const name = await provider.lookupAddress(currentAddress);
+        if (!name) {
+            ensNameCache = null;
+            if (ensNameEl) ensNameEl.textContent = "No ENS name found";
+            setEnsStatus("No ENS name found for this address.");
+            return;
+        }
+        ensNameCache = name;
+        if (ensNameEl) ensNameEl.textContent = name;
+        setEnsStatus("ENS name resolved.");
+    } catch (e) {
+        setEnsStatus("Failed to resolve ENS name.", true);
+    }
+}
+
+async function readEnsRecord() {
+    if (!currentAddress) {
+        setEnsStatus("Connect your wallet first.", true);
+        return;
+    }
+    try {
+        if (!ensNameCache) {
+            await resolveEnsName();
+        }
+        if (!ensNameCache) return;
+        const provider = getEnsReadProvider();
+        const resolver = await provider.getResolver(ensNameCache);
+        if (!resolver) {
+            setEnsStatus("No resolver set for this ENS name.", true);
+            return;
+        }
+        const value = await resolver.getText(ENS_RECORD_KEY);
+        if (ensRecordValueEl) ensRecordValueEl.textContent = value || "-";
+        setEnsStatus("Record loaded.");
+    } catch (e) {
+        setEnsStatus("Failed to read ENS record.", true);
+    }
+}
+
+async function writeEnsRecord() {
+    if (!currentAddress) {
+        setEnsStatus("Connect your wallet first.", true);
+        return;
+    }
+    if (!ensRecordInput || !ensRecordInput.value.trim()) {
+        setEnsStatus("Enter a value to write.", true);
+        return;
+    }
+    try {
+        if (!ensNameCache) {
+            await resolveEnsName();
+        }
+        if (!ensNameCache) return;
+        const signer = await getMainnetSigner();
+        if (!signer) return;
+        const resolver = await signer.provider.getResolver(ensNameCache);
+        if (!resolver) {
+            setEnsStatus("No resolver set for this ENS name.", true);
+            return;
+        }
+        setEnsStatus("Submitting ENS record update...");
+        const tx = await resolver.connect(signer).setText(ensNameCache, ENS_RECORD_KEY, ensRecordInput.value.trim());
+        setEnsStatus(`ENS update submitted: ${tx.hash}`);
+        await tx.wait();
+        setEnsStatus("ENS record updated.");
+        if (ensTxLink) {
+            ensTxLink.href = `https://etherscan.io/tx/${tx.hash}`;
+            ensTxLink.style.display = "inline-flex";
+        }
+        await readEnsRecord();
+    } catch (e) {
+        const raw = (e.shortMessage || e.reason || e.message || "").toLowerCase();
+        let message = e.shortMessage || e.reason || e.message || "ENS update failed.";
+        if (raw.includes("user rejected") || raw.includes("user denied")) {
+            message = "Transaction was rejected in the wallet.";
+        }
+        setEnsStatus(message, true);
+    }
+}
+
 function initializePayouts() {
     if (payoutsUploadButton && payoutsFileInput) {
         payoutsUploadButton.onclick = () => payoutsFileInput.click();
@@ -248,12 +402,29 @@ function initializePayouts() {
         payoutsModalClose.onclick = closePayoutsModal;
     }
 
+    if (payoutsBatchesRefresh) {
+        payoutsBatchesRefresh.onclick = loadRecentBatches;
+    }
+
     if (payoutsMemo) {
         payoutsMemo.oninput = updatePayoutActionsState;
     }
 
     updatePayoutActionsState();
     renderPayoutConfig();
+    loadRecentBatches();
+}
+
+function initializeEns() {
+    if (ensResolveButton) {
+        ensResolveButton.onclick = resolveEnsName;
+    }
+    if (ensReadButton) {
+        ensReadButton.onclick = readEnsRecord;
+    }
+    if (ensWriteButton) {
+        ensWriteButton.onclick = writeEnsRecord;
+    }
 }
 
 // --- Polling Helper to wait for MetaMask ---
@@ -363,6 +534,9 @@ async function initDashboard() {
         isUnlocked = false;
         
         updateStatus(`Found ${events.length} notes in the last 5,000 blocks.`);
+        if (ensNameEl && ensNameEl.textContent === "Not resolved") {
+            resolveEnsName();
+        }
 
     } catch (err) {
         console.error(err);
@@ -662,7 +836,8 @@ function getArcBatchConfig() {
         batchContractAddress: arc.batchContractAddress,
         usdcAddress: arc.usdcAddress,
         chainId: arc.chainId,
-        explorer: arc.explorer
+        explorer: arc.explorer,
+        rpcUrl: arc.rpcUrl
     };
 }
 
@@ -716,6 +891,47 @@ function openPayoutsModal() {
 function closePayoutsModal() {
     if (!payoutsModal) return;
     payoutsModal.style.display = "none";
+}
+
+async function loadRecentBatches() {
+    if (!payoutsBatchesList) return;
+    const config = getArcBatchConfig();
+    if (!config || !config.batchContractAddress || !config.rpcUrl) {
+        payoutsBatchesList.textContent = "Batch contract not configured.";
+        return;
+    }
+
+    try {
+        payoutsBatchesList.textContent = "Loading batch history...";
+        const provider = new ethers.JsonRpcProvider(config.rpcUrl);
+        const contract = new ethers.Contract(config.batchContractAddress, window.ARC_BATCH_ABI || [], provider);
+        const latest = await provider.getBlockNumber();
+        const startBlock = Math.max(latest - 20000, 0);
+        const filter = currentAddress
+            ? contract.filters.BatchPayout(currentAddress)
+            : contract.filters.BatchPayout();
+        const events = await contract.queryFilter(filter, startBlock, "latest");
+        const recent = events.slice(-10).reverse();
+
+        if (!recent.length) {
+            payoutsBatchesList.textContent = "No batch activity yet.";
+            return;
+        }
+
+        const rows = recent.map(ev => {
+            const txHash = ev.transactionHash;
+            const memoHash = ev.args.memoHash;
+            const count = Number(ev.args.count);
+            const total = formatUsdcAmount(ev.args.totalAmount);
+            const shortTx = txHash.slice(0, 6) + "..." + txHash.slice(-4);
+            const shortMemo = memoHash.slice(0, 6) + "..." + memoHash.slice(-4);
+            const link = `${config.explorer}/tx/${txHash}`;
+            return `• <a href="${link}" target="_blank" rel="noopener">${shortTx}</a> — ${count} recipients — ${total} USDC — memo ${shortMemo}`;
+        });
+        payoutsBatchesList.innerHTML = rows.join("<br>");
+    } catch (e) {
+        payoutsBatchesList.textContent = "Failed to load batch history.";
+    }
 }
 
 async function getArcSigner() {

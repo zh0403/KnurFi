@@ -207,9 +207,38 @@
                 <p class="text-slate-400 text-sm" style="margin-top:6px;">
                     ENS identity and compliance metadata will live here.
                 </p>
-                <div class="mt-4 flex flex-wrap gap-3">
-                    <button class="btn btn-outline">Manage ENS</button>
-                    <button class="btn btn-outline">Update Metadata</button>
+            </div>
+            <div class="mt-6">
+                <div class="card">
+                    <h4>ENS Identity</h4>
+                    <p class="text-slate-400 text-sm" style="margin-top:6px;">
+                        Resolve your ENS name and manage the <span style="color:#e2e8f0;">com.knurfi.metadata</span> text record.
+                    </p>
+                    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <div class="text-slate-400 text-xs">ENS Name</div>
+                            <div id="ens-name" style="margin-top:6px; color:#e2e8f0;">Not resolved</div>
+                        </div>
+                        <div>
+                            <div class="text-slate-400 text-xs">Current Record</div>
+                            <div id="ens-record-value" style="margin-top:6px; color:#e2e8f0;">-</div>
+                        </div>
+                    </div>
+                    <div style="margin-top:14px;">
+                        <label for="ens-record-input" class="text-slate-400 text-xs">New Record Value</label>
+                        <input id="ens-record-input" type="text" placeholder="Paste metadata hash"
+                            style="margin-top:6px; width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:#0f172a; color:#e5e7eb;">
+                    </div>
+                    <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+                        <button id="ens-resolve-btn" class="btn btn-outline">Resolve ENS</button>
+                        <button id="ens-read-btn" class="btn btn-outline">Read Record</button>
+                        <button id="ens-write-btn" class="btn">Write Record</button>
+                    </div>
+                    <p id="ens-status" class="text-slate-400 text-sm" style="margin-top:10px;"></p>
+                    <a id="ens-tx-link" class="text-slate-400 text-sm" style="margin-top:6px; display:none;" target="_blank" rel="noopener">View on Explorer</a>
+                    <p class="text-slate-400 text-xs" style="margin-top:10px;">
+                        ENS writes require Ethereum mainnet gas.
+                    </p>
                 </div>
             </div>
             <div class="mt-6">
@@ -313,6 +342,17 @@
                     </div>
                     <p id="payouts-status" class="text-slate-400 text-sm" style="margin-top:10px;"></p>
                     <a id="payouts-tx-link" class="text-slate-400 text-sm" style="margin-top:6px; display:none;" target="_blank" rel="noopener">View on Explorer</a>
+                </div>
+            </div>
+            <div class="mt-6">
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h4>Recent Batches</h4>
+                        <button id="payouts-batches-refresh" class="btn btn-outline">Refresh</button>
+                    </div>
+                    <div id="payouts-batches-list" class="text-slate-400 text-sm" style="margin-top:10px;">
+                        No batch activity yet.
+                    </div>
                 </div>
             </div>
         </div>
