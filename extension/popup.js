@@ -18,6 +18,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    const btnArc = document.getElementById('go-arc');
+    if (btnArc) {
+        btnArc.addEventListener('click', () => {
+            chrome.tabs.create({ url: 'https://testnet.arcscan.app/' });
+        });
+    }
+
     // 3. Quick Link: Go to GitHub (Good for judges)
     const btnGit = document.getElementById('go-github');
     if (btnGit) {

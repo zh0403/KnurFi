@@ -381,14 +381,37 @@
                 <p class="text-slate-400 text-sm" style="margin-top:6px;">
                     Bridge assets with an attached cross-chain memo for audit trails.
                 </p>
+                <div class="card" style="margin-top:16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+                        <h4>LI.FI Widget</h4>
+                        <a id="bridge-widget-link" class="text-slate-400 text-xs" href="https://playground.li.fi/" target="_blank" rel="noopener">Open in new tab</a>
+                    </div>
+                    <div id="bridge-widget" style="margin-top:12px;">
+                        <iframe id="bridge-widget-frame" title="LI.FI Widget" style="width:100%; min-height:560px; border:1px solid var(--border); border-radius:12px; background:#0f172a;"></iframe>
+                    </div>
+                </div>
                 <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="card">
                         <h4>Cross-Chain Memo</h4>
                         <p class="text-slate-400 text-sm" style="margin-top:6px;">Describe the source and destination intent.</p>
+                        <textarea id="bridge-memo" placeholder="Add a cross-chain note for audit trails" style="margin-top:10px; width:100%; min-height:120px; padding:10px; border-radius:8px; border:1px solid var(--border); background:#0f172a; color:#e5e7eb;"></textarea>
+                        <div style="margin-top:10px;">
+                            <label class="text-slate-400 text-xs">Source Tx Hash (optional)</label>
+                            <input id="bridge-source-tx" type="text" placeholder="0x..." style="margin-top:6px; width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:#0f172a; color:#e5e7eb;">
+                        </div>
+                        <div style="margin-top:10px;">
+                            <label class="text-slate-400 text-xs">Destination Tx Hash (optional)</label>
+                            <input id="bridge-dest-tx" type="text" placeholder="0x..." style="margin-top:6px; width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:#0f172a; color:#e5e7eb;">
+                        </div>
+                        <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+                            <button id="bridge-save-btn" class="btn">Save Bridge Note</button>
+                            <button id="bridge-clear-btn" class="btn btn-outline">Clear</button>
+                        </div>
+                        <p id="bridge-status" class="text-slate-400 text-sm" style="margin-top:10px;"></p>
                     </div>
                     <div class="card">
                         <h4>Bridge Activity</h4>
-                        <p class="text-slate-400 text-sm" style="margin-top:6px;">No bridge activity recorded yet.</p>
+                        <div id="bridge-activity" class="text-slate-400 text-sm" style="margin-top:6px;">No bridge activity recorded yet.</div>
                     </div>
                 </div>
             </div>

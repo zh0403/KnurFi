@@ -17,14 +17,14 @@
 
     "content_scripts": [
       {
-        "matches": ["https://sepolia.etherscan.io/tx/*"],
+        "matches": ["https://sepolia.etherscan.io/tx/*", "https://testnet.arcscan.app/tx/*"],
         "js": ["content.js"],
         "run_at": "document_end"
       }
     ],
     
     "permissions": ["storage"],
-    "host_permissions": ["https://sepolia.etherscan.io/*"],
+    "host_permissions": ["https://sepolia.etherscan.io/*", "https://testnet.arcscan.app/*"],
     "web_accessible_resources": [
       {
         "resources": ["ethers.js", "crypto-js.js", "abi.js", "inpage.js", "icon.png"],

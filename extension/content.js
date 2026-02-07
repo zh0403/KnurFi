@@ -24,13 +24,13 @@ function loadScript(index) {
 
     // WAIT for this script to finish loading before starting the next one
     script.onload = function() {
-        console.log(`[mt_note] Loaded: ${file}`);
+        console.log(`[knurfi] Loaded: ${file}`);
         loadScript(index + 1); // Load next
         this.remove(); // Clean up the tag (optional)
     };
     
     script.onerror = function() {
-        console.error(`[mt_note] Failed to load: ${file}`);
+        console.error(`[knurfi] Failed to load: ${file}`);
     };
 
     (document.head || document.documentElement).appendChild(script);

@@ -7,9 +7,13 @@ const ICON_URL = currentScript && currentScript.dataset
     ? currentScript.dataset.iconUrl || ''
     : '';
 
+const HOST = window.location.host;
+const LEDGER_ENABLED = HOST === "sepolia.etherscan.io";
 // Ensure the address is set (Safety check)
 // Replace with your ACTUAL contract address if different
-const CONTRACT_ADDRESS = window.MT_NOTE_ADDRESS || "0xb04D5E5234D5556b5B46600414763ff3829199fd";
+const CONTRACT_ADDRESS = LEDGER_ENABLED
+    ? (window.MT_NOTE_ADDRESS || "0xb04D5E5234D5556b5B46600414763ff3829199fd")
+    : null;
 let GLOBAL_KEY = null; // We store the key here after they sign once
 
 // --- HELPER: Derive Key from Signature ---
@@ -43,6 +47,10 @@ function decryptData(ciphertext, key) {
 
 async function init() {
     console.log("📘 KnurFi: Initializing...");
+    if (!LEDGER_ENABLED || !CONTRACT_ADDRESS) {
+        console.log("📘 KnurFi: Ledger notes not enabled on this explorer.");
+        return;
+    }
 
     // --- NEW: Add Global Styles for Animations ---
     const styleTag = document.createElement('style');

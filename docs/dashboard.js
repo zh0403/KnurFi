@@ -49,6 +49,16 @@ const payoutsBatchesList = document.getElementById('payouts-batches-list');
 const payoutsBatchesRefresh = document.getElementById('payouts-batches-refresh');
 const payoutsBatchesToggle = document.getElementById('payouts-batches-toggle');
 
+const bridgeWidgetFrame = document.getElementById('bridge-widget-frame');
+const bridgeWidgetLink = document.getElementById('bridge-widget-link');
+const bridgeMemo = document.getElementById('bridge-memo');
+const bridgeSourceTx = document.getElementById('bridge-source-tx');
+const bridgeDestTx = document.getElementById('bridge-dest-tx');
+const bridgeSaveButton = document.getElementById('bridge-save-btn');
+const bridgeClearButton = document.getElementById('bridge-clear-btn');
+const bridgeStatus = document.getElementById('bridge-status');
+const bridgeActivity = document.getElementById('bridge-activity');
+
 const ensNameEl = document.getElementById('ens-name');
 const ensRecordValueEl = document.getElementById('ens-record-value');
 const ensRecordInput = document.getElementById('ens-record-input');
@@ -66,6 +76,9 @@ const ensRecordUpdated = document.getElementById('ens-record-updated');
 const ENS_RECORD_KEY = "com.knurfi.metadata";
 const ENS_RPC_URL = "https://rpc.sepolia.org";
 let ensNameCache = null;
+
+const BRIDGE_STORAGE_KEY = "knurfiBridgeActivity";
+const LIFI_WIDGET_BASE_URL = "https://playground.li.fi/";
 
 let payoutRecipients = [];
 let payoutAmounts = [];
@@ -103,6 +116,7 @@ if (chainSelect) {
 initializeChains();
 initializePayouts();
 initializeEns();
+initializeBridge();
 
 function getChains() {
     return window.KNURFI_CHAINS || {};
@@ -515,6 +529,127 @@ function initializeEns() {
     }
 }
 
+function initializeBridge() {
+    if (bridgeSaveButton) {
+        bridgeSaveButton.onclick = saveBridgeRecord;
+    }
+    if (bridgeClearButton) {
+        bridgeClearButton.onclick = clearBridgeForm;
+    }
+    setBridgeWidgetUrl();
+    renderBridgeActivity();
+}
+
+function setBridgeStatus(message, isError) {
+    if (!bridgeStatus) return;
+    bridgeStatus.textContent = message || "";
+    bridgeStatus.style.color = isError ? "#f87171" : "#94a3b8";
+}
+
+function getBridgeWidgetUrl() {
+    try {
+        const url = new URL(LIFI_WIDGET_BASE_URL);
+        url.searchParams.set("integrator", "KnurFi");
+        if (currentAddress) {
+            url.searchParams.set("toAddress", currentAddress);
+        }
+        return url.toString();
+    } catch (e) {
+        return LIFI_WIDGET_BASE_URL;
+    }
+}
+
+function setBridgeWidgetUrl() {
+    const url = getBridgeWidgetUrl();
+    if (bridgeWidgetFrame) {
+        bridgeWidgetFrame.src = url;
+    }
+    if (bridgeWidgetLink) {
+        bridgeWidgetLink.href = url;
+    }
+}
+
+function getBridgeActivity() {
+    try {
+        const stored = localStorage.getItem(BRIDGE_STORAGE_KEY);
+        return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveBridgeActivity(items) {
+    localStorage.setItem(BRIDGE_STORAGE_KEY, JSON.stringify(items));
+}
+
+function clearBridgeForm() {
+    if (bridgeMemo) bridgeMemo.value = "";
+    if (bridgeSourceTx) bridgeSourceTx.value = "";
+    if (bridgeDestTx) bridgeDestTx.value = "";
+    setBridgeStatus("");
+}
+
+function normalizeTxHash(value) {
+    if (!value) return "";
+    return value.trim();
+}
+
+function buildBridgeTxLink(hash) {
+    if (!hash) return "#";
+    return `https://scan.li.fi/tx/${hash}`;
+}
+
+function saveBridgeRecord() {
+    if (!bridgeMemo || !bridgeSourceTx || !bridgeDestTx) return;
+    const memo = bridgeMemo.value.trim();
+    const sourceTx = normalizeTxHash(bridgeSourceTx.value);
+    const destTx = normalizeTxHash(bridgeDestTx.value);
+    if (!memo) {
+        setBridgeStatus("Add a memo before saving.", true);
+        return;
+    }
+    if (!sourceTx && !destTx) {
+        setBridgeStatus("Add at least one transaction hash.", true);
+        return;
+    }
+
+    const items = getBridgeActivity();
+    items.unshift({
+        id: `bridge_${Date.now()}`,
+        memo,
+        sourceTx,
+        destTx,
+        address: currentAddress || null,
+        createdAt: new Date().toISOString()
+    });
+    saveBridgeActivity(items.slice(0, 50));
+    renderBridgeActivity();
+    clearBridgeForm();
+    setBridgeStatus("Bridge memo saved.");
+}
+
+function renderBridgeActivity() {
+    if (!bridgeActivity) return;
+    const items = getBridgeActivity();
+    if (!items.length) {
+        bridgeActivity.textContent = "No bridge activity recorded yet.";
+        return;
+    }
+    const rows = items.map(item => {
+        const when = new Date(item.createdAt).toLocaleString();
+        const memo = item.memo || "-";
+        const source = item.sourceTx
+            ? `<a href="${buildBridgeTxLink(item.sourceTx)}" target="_blank" rel="noopener">Source Tx</a>`
+            : "Source Tx -";
+        const dest = item.destTx
+            ? `<a href="${buildBridgeTxLink(item.destTx)}" target="_blank" rel="noopener">Dest Tx</a>`
+            : "Dest Tx -";
+        const owner = item.address ? `${item.address.slice(0, 6)}...${item.address.slice(-4)}` : "Wallet -";
+        return `• <span>${memo}</span><br><span class="text-slate-500 text-xs">${when} • ${owner}</span><br>${source} • ${dest}`;
+    });
+    bridgeActivity.innerHTML = rows.join("<br><br>");
+}
+
 // --- Polling Helper to wait for MetaMask ---
 async function waitForEthereum() {
     if (window.ethereum) return window.ethereum;
@@ -548,6 +683,7 @@ async function initDashboard() {
         connectButton.innerText = `${shortAddr} [Disconnect]`;
         connectButton.disabled = false;
         connectButton.onclick = disconnectWallet;
+        setBridgeWidgetUrl();
 
         const contractAddress = getActiveContractAddress();
         if (!contractAddress) {
@@ -1386,6 +1522,7 @@ function disconnectWallet() {
     isConnected = false;
     isUnlocked = false;
     currentAddress = null;
+    setBridgeWidgetUrl();
 
     // Reset stats
     document.getElementById('stat-count').innerText = "-";
