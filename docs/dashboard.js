@@ -57,6 +57,7 @@ const ensReadButton = document.getElementById('ens-read-btn');
 const ensWriteButton = document.getElementById('ens-write-btn');
 const ensStatus = document.getElementById('ens-status');
 const ensTxLink = document.getElementById('ens-tx-link');
+const ensNetworkHint = document.getElementById('ens-network-hint');
 const ensCopyNameButton = document.getElementById('ens-copy-name');
 const ensCopyRecordButton = document.getElementById('ens-copy-record');
 const ensGenerateHashButton = document.getElementById('ens-generate-hash');
@@ -248,9 +249,17 @@ function setEnsStatus(message, isError) {
 function updateEnsWriteState() {
     if (!ensWriteButton) return;
     const hasName = ensNameCache && ensNameCache.length > 0;
+    const isSepolia = window.ethereum && window.ethereum.chainId === "0xaa36a7";
     const enabled = !!hasName;
     ensWriteButton.disabled = !enabled;
     ensWriteButton.style.opacity = enabled ? "1" : "0.6";
+    if (ensNetworkHint) {
+        if (hasName && !isSepolia) {
+            ensNetworkHint.textContent = "Switch to Ethereum Sepolia to write ENS records.";
+        } else {
+            ensNetworkHint.textContent = "";
+        }
+    }
 }
 
 function copyEnsValue(value) {
