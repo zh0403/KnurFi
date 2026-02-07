@@ -40,7 +40,7 @@ Enable "Developer Mode" (top right).
 
 Click "Load Unpacked" and select the `extension` folder.
 
-Go to `Ethereum Sepolia Explorer`.
+Go to `Explorer`.
 
 ### 3. The Dashboard
 Open `docs/dashboard.html` in your browser (via Live Server) or visit the live link below.

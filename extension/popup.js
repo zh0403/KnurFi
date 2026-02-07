@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 2. Quick Link: Go to Sepolia Explorer
+    // 2. Quick Link: Open Explorer
     const btnExplorer = document.getElementById('go-explorer');
     if (btnExplorer) {
         btnExplorer.addEventListener('click', () => {

@@ -175,11 +175,12 @@
                 <div class="brand-tagline">Know Your Finance</div>
             </div>
         </div>
-        <a id="nav-overview" class="nav-item active" data-tab="overview">📊 Overview</a>
+        <a id="nav-profile" class="nav-item active" data-tab="profile">👤 Profile</a>
+        <a id="nav-overview" class="nav-item" data-tab="overview">📊 Overview</a>
         <a id="nav-payouts" class="nav-item" data-tab="payouts">💸 Payouts</a>
         <a id="nav-bridge" class="nav-item" data-tab="bridge">🌉 Bridge</a>
         <a id="nav-settings" class="nav-item" data-tab="settings">⚙️ Settings</a>
-        <a class="nav-item" href="https://sepolia.etherscan.io/" target="_blank">🔗 Sepolia Explorer</a>
+        <a id="nav-explorer" class="nav-item" href="#">🔗 Explorer</a>
         <div style="flex-grow:1"></div>
         <div style="font-size:11px; color:#555;">v1.0.0 (Hackathon Build)</div>
     </div>
@@ -187,17 +188,43 @@
     <div class="main">
         <div class="header">
             <div class="page-title">
-                <h2 id="page-title">Overview</h2>
-                <p id="page-subtitle" class="text-slate-400 text-sm">Context layer for on-chain finance.</p>
+                <h2 id="page-title">Profile</h2>
+                <p id="page-subtitle" class="text-slate-400 text-sm">Your ENS identity and compliance metadata.</p>
             </div>
             <div style="display:flex; gap:10px; align-items:center;">
+                <select id="chain-select" class="btn btn-outline" style="padding: 8px 12px;">
+                    <option>Loading networks...</option>
+                </select>
                 <button id="unlock-btn" class="btn btn-outline" style="display:none;">Unlock Notes</button>
                 <button id="connect-btn" class="btn">Connect Wallet</button>
             </div>
         </div>
 
+        <!-- Profile Tab -->
+        <div id="tab-profile">
+            <div class="card">
+                <h4>Profile</h4>
+                <p class="text-slate-400 text-sm" style="margin-top:6px;">
+                    ENS identity and compliance metadata will live here.
+                </p>
+                <div class="mt-4 flex flex-wrap gap-3">
+                    <button class="btn btn-outline">Manage ENS</button>
+                    <button class="btn btn-outline">Update Metadata</button>
+                </div>
+            </div>
+            <div class="mt-6">
+                <div class="card">
+                    <h4>Export</h4>
+                    <p style="color: var(--text-muted); font-size: 13px; margin-top:4px;">
+                        Download your currently loaded ledger as a CSV file.
+                    </p>
+                    <button id="download-csv-btn" class="btn" style="margin-top:10px;">Download Ledger as CSV</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Overview Tab -->
-        <div id="tab-overview">
+        <div id="tab-overview" style="display:none;">
             <div class="stats-grid">
                 <div class="card">
                     <h4>Total Notes</h4>
@@ -285,13 +312,11 @@
             <h3 style="margin-top:0; margin-bottom:16px;">Settings</h3>
             <div class="settings-section">
                 <div class="card">
-                    <h4>Export</h4>
+                    <h4>Coming Soon</h4>
                     <p style="color: var(--text-muted); font-size: 13px; margin-top:4px;">
-                        Download your currently loaded ledger as a CSV file.
+                        UI customization, preferences, and advanced settings will live here.
                     </p>
-                    <button id="download-csv-btn" class="btn" style="margin-top:10px;">Download Ledger as CSV</button>
                 </div>
-
                 <div id="admin-zone" class="card admin-zone" style="display:none;">
                     <!-- Filled dynamically for contract owner -->
                 </div>
@@ -302,6 +327,7 @@
     <script src="ethers.js"></script>
     <script src="crypto-js.js"></script>
     <script src="abi.js"></script>
+    <script src="chain-config.js"></script>
     <script src="dashboard.js"></script>
 
 </body>

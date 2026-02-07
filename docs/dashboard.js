@@ -1,16 +1,21 @@
 // dashboard.js
 
-const CONTRACT_ADDRESS = window.MT_NOTE_ADDRESS || "0xb04D5E5234D5556b5B46600414763ff3829199fd"; 
+const FALLBACK_CONTRACT_ADDRESS = window.MT_NOTE_ADDRESS || "0xb04D5E5234D5556b5B46600414763ff3829199fd";
 let provider, signer, contract;
 let allEvents = []; // Store raw events here
 let isConnected = false;
 let isUnlocked = false;
 let currentDecryptKey = null;
+let currentAddress = null;
+let activeChainKey = "sepolia";
 
 // Wire up buttons
 const connectButton = document.getElementById('connect-btn');
 const unlockButton = document.getElementById('unlock-btn');
 const navItems = document.querySelectorAll('.nav-item[data-tab]');
+const explorerLink = document.getElementById('nav-explorer');
+const chainSelect = document.getElementById('chain-select');
+const tabProfile = document.getElementById('tab-profile');
 const tabOverview = document.getElementById('tab-overview');
 const tabPayouts = document.getElementById('tab-payouts');
 const tabBridge = document.getElementById('tab-bridge');
@@ -25,7 +30,7 @@ if (unlockButton) {
     unlockButton.onclick = unlockNotes;
 }
 
-if (navItems && tabOverview && tabSettings) {
+if (navItems && tabProfile && tabSettings) {
     navItems.forEach(item => {
         item.onclick = () => switchTab(item.dataset.tab);
     });
@@ -33,6 +38,118 @@ if (navItems && tabOverview && tabSettings) {
 
 if (downloadCsvButton) {
     downloadCsvButton.onclick = downloadLedgerAsCsv;
+}
+
+if (explorerLink) {
+    explorerLink.onclick = (event) => {
+        event.preventDefault();
+        openExplorer();
+    };
+}
+
+if (chainSelect) {
+    chainSelect.onchange = () => {
+        setActiveChain(chainSelect.value);
+    };
+}
+
+initializeChains();
+
+function getChains() {
+    return window.KNURFI_CHAINS || {};
+}
+
+function initializeChains() {
+    const chains = getChains();
+    const stored = localStorage.getItem("knurfiActiveChain");
+    if (stored && chains[stored]) {
+        activeChainKey = stored;
+    }
+
+    if (chainSelect) {
+        chainSelect.innerHTML = "";
+        Object.entries(chains).forEach(([key, chain]) => {
+            const option = document.createElement("option");
+            option.value = key;
+            option.textContent = chain.name;
+            if (key === activeChainKey) option.selected = true;
+            chainSelect.appendChild(option);
+        });
+    }
+
+    updateExplorerLabel();
+}
+
+function setActiveChain(key) {
+    const chains = getChains();
+    if (!chains[key]) return;
+    activeChainKey = key;
+    localStorage.setItem("knurfiActiveChain", key);
+    updateExplorerLabel();
+
+    if (isConnected) {
+        disconnectWallet();
+        initDashboard();
+    }
+}
+
+function getActiveChain() {
+    const chains = getChains();
+    return chains[activeChainKey] || chains.sepolia;
+}
+
+function getActiveContractAddress() {
+    const chain = getActiveChain();
+    if (chain && chain.contractAddress) return chain.contractAddress;
+    if (activeChainKey === "sepolia") return FALLBACK_CONTRACT_ADDRESS;
+    return null;
+}
+
+function getExplorerBase() {
+    const chain = getActiveChain();
+    return chain && chain.explorer ? chain.explorer : "https://sepolia.etherscan.io";
+}
+
+function updateExplorerLabel() {
+    if (!explorerLink) return;
+    explorerLink.textContent = "🔗 Explorer";
+}
+
+async function ensureWalletChain() {
+    const chain = getActiveChain();
+    if (!chain || !chain.chainId) return;
+
+    const hexChainId = "0x" + chain.chainId.toString(16);
+    try {
+        await window.ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: hexChainId }]
+        });
+    } catch (e) {
+        if (e && e.code === 4902 && chain.rpcUrl && chain.nativeCurrency) {
+            await window.ethereum.request({
+                method: "wallet_addEthereumChain",
+                params: [{
+                    chainId: hexChainId,
+                    chainName: chain.name,
+                    nativeCurrency: chain.nativeCurrency,
+                    rpcUrls: [chain.rpcUrl],
+                    blockExplorerUrls: chain.explorer ? [chain.explorer] : []
+                }]
+            });
+        } else {
+            throw e;
+        }
+    }
+}
+
+function openExplorer() {
+    const base = getExplorerBase();
+    if (!currentAddress) {
+        window.open(base, "_blank");
+        return;
+    }
+    window.open(`${base}/address/${currentAddress}`, "_blank");
 }
 
 // --- Polling Helper to wait for MetaMask ---
@@ -57,12 +174,27 @@ async function initDashboard() {
     provider = new ethers.BrowserProvider(window.ethereum);
     
     try {
+        await ensureWalletChain();
         await provider.send("eth_requestAccounts", []);
         signer = await provider.getSigner();
-        contract = new ethers.Contract(CONTRACT_ADDRESS, window.MT_NOTE_ABI, signer);
+        currentAddress = await signer.getAddress();
+
+        const address = currentAddress;
+        const shortAddr = address.slice(0, 6) + "..." + address.slice(-4);
+        connectButton.innerText = `${shortAddr} [Disconnect]`;
+        connectButton.disabled = false;
+        connectButton.onclick = disconnectWallet;
+
+        const contractAddress = getActiveContractAddress();
+        if (!contractAddress) {
+            isConnected = true;
+            updateStatus("No contract configured for this network yet.");
+            return;
+        }
+
+        contract = new ethers.Contract(contractAddress, window.MT_NOTE_ABI, signer);
         
-        const address = await signer.getAddress();
-        console.log("Querying Contract:", CONTRACT_ADDRESS, "For User:", address);
+        console.log("Querying Contract:", contractAddress, "For User:", address);
 
         // Owner check for Admin Zone
         let isOwner = false;
@@ -103,11 +235,6 @@ async function initDashboard() {
         renderTable(allEvents, null); // Render LOCKED initially
 
         // 5. Update buttons and status
-        const shortAddr = address.slice(0, 6) + "..." + address.slice(-4);
-        connectButton.innerText = `${shortAddr} [Disconnect]`;
-        connectButton.disabled = false;
-        connectButton.onclick = disconnectWallet;
-
         if (unlockButton) {
             unlockButton.style.display = 'inline-flex';
             unlockButton.disabled = false;
@@ -200,7 +327,7 @@ function renderTable(events, key) {
 
         // Format Tx Hash link
         const shortHash = txHash.slice(0, 6) + "..." + txHash.slice(-4);
-        const link = `https://sepolia.etherscan.io/tx/${txHash}`;
+        const link = `${getExplorerBase()}/tx/${txHash}`;
 
         const row = `
             <tr>
@@ -231,6 +358,7 @@ function updateStatus(msg) {
 
 function switchTab(tab) {
     const tabs = {
+        profile: tabProfile,
         overview: tabOverview,
         payouts: tabPayouts,
         bridge: tabBridge,
@@ -238,6 +366,10 @@ function switchTab(tab) {
     };
 
     const titles = {
+        profile: {
+            title: "Profile",
+            subtitle: "Your ENS identity and compliance metadata."
+        },
         overview: {
             title: "Overview",
             subtitle: "Context layer for on-chain finance."
@@ -252,7 +384,7 @@ function switchTab(tab) {
         },
         settings: {
             title: "Settings",
-            subtitle: "Export data and manage admin controls."
+            subtitle: "Preferences and UI customization."
         }
     };
 
@@ -364,8 +496,9 @@ function setupAdminZone() {
     `;
 
     // Fetch and display balance
-    if (provider) {
-        provider.getBalance(CONTRACT_ADDRESS).then(bn => {
+    const contractAddress = getActiveContractAddress();
+    if (provider && contractAddress) {
+        provider.getBalance(contractAddress).then(bn => {
             const mnt = Number(ethers.formatEther(bn));
             const el = document.getElementById('admin-balance');
             if (el) el.innerText = mnt.toFixed(4) + " ETH";
@@ -427,6 +560,7 @@ function disconnectWallet() {
     allEvents = [];
     isConnected = false;
     isUnlocked = false;
+    currentAddress = null;
 
     // Reset stats
     document.getElementById('stat-count').innerText = "-";
