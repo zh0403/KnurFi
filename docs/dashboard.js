@@ -25,6 +25,20 @@ const pageSubtitle = document.getElementById('page-subtitle');
 const downloadCsvButton = document.getElementById('download-csv-btn');
 const overviewEmptyCard = document.getElementById('overview-empty-card');
 const overviewEmptyText = document.getElementById('overview-empty-text');
+const payoutsFileInput = document.getElementById('payouts-file');
+const payoutsUploadButton = document.getElementById('payouts-upload-btn');
+const payoutsClearButton = document.getElementById('payouts-clear-btn');
+const payoutsFileName = document.getElementById('payouts-file-name');
+const payoutsPreview = document.getElementById('payouts-preview');
+const payoutsSummary = document.getElementById('payouts-summary');
+const payoutsMemo = document.getElementById('payouts-memo');
+const payoutsSubmitButton = document.getElementById('payouts-submit-btn');
+const payoutsApproveButton = document.getElementById('payouts-approve-btn');
+const payoutsStatus = document.getElementById('payouts-status');
+
+let payoutRecipients = [];
+let payoutAmounts = [];
+let payoutTotal = null;
 
 connectButton.onclick = initDashboard;
 if (unlockButton) {
@@ -56,6 +70,7 @@ if (chainSelect) {
 }
 
 initializeChains();
+initializePayouts();
 
 function getChains() {
     return window.KNURFI_CHAINS || {};
@@ -70,7 +85,7 @@ function initializeChains() {
 
     if (chainSelect) {
         chainSelect.innerHTML = "";
-        const entries = Object.entries(chains);
+        const entries = Object.entries(chains).filter(([, chain]) => chain.ledgerEnabled !== false);
         if (entries.length <= 1) {
             chainSelect.style.display = "none";
         } else {
@@ -104,6 +119,11 @@ function setActiveChain(key) {
 function getActiveChain() {
     const chains = getChains();
     return chains[activeChainKey] || chains.sepolia;
+}
+
+function getArcChain() {
+    const chains = getChains();
+    return chains.arcTestnet;
 }
 
 function getActiveContractAddress() {
@@ -151,6 +171,34 @@ async function ensureWalletChain() {
     }
 }
 
+async function ensureArcWalletChain() {
+    const chain = getArcChain();
+    if (!chain || !chain.chainId) return;
+
+    const hexChainId = "0x" + chain.chainId.toString(16);
+    try {
+        await window.ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: hexChainId }]
+        });
+    } catch (e) {
+        if (e && e.code === 4902 && chain.rpcUrl && chain.nativeCurrency) {
+            await window.ethereum.request({
+                method: "wallet_addEthereumChain",
+                params: [{
+                    chainId: hexChainId,
+                    chainName: chain.name,
+                    nativeCurrency: chain.nativeCurrency,
+                    rpcUrls: [chain.rpcUrl],
+                    blockExplorerUrls: chain.explorer ? [chain.explorer] : []
+                }]
+            });
+        } else {
+            throw e;
+        }
+    }
+}
+
 function openExplorer() {
     const base = getExplorerBase();
     if (!currentAddress) {
@@ -158,6 +206,25 @@ function openExplorer() {
         return;
     }
     window.open(`${base}/address/${currentAddress}`, "_blank");
+}
+
+function initializePayouts() {
+    if (payoutsUploadButton && payoutsFileInput) {
+        payoutsUploadButton.onclick = () => payoutsFileInput.click();
+        payoutsFileInput.onchange = handlePayoutFile;
+    }
+
+    if (payoutsClearButton) {
+        payoutsClearButton.onclick = clearPayouts;
+    }
+
+    if (payoutsSubmitButton) {
+        payoutsSubmitButton.onclick = submitPayoutBatch;
+    }
+
+    if (payoutsApproveButton) {
+        payoutsApproveButton.onclick = approveUsdcForPayouts;
+    }
 }
 
 // --- Polling Helper to wait for MetaMask ---
@@ -391,6 +458,204 @@ function setOverviewEmptyState(message) {
     }
     overviewEmptyText.textContent = message;
     overviewEmptyCard.style.display = "";
+}
+
+function setPayoutStatus(message, isError) {
+    if (!payoutsStatus) return;
+    payoutsStatus.textContent = message || "";
+    payoutsStatus.style.color = isError ? "#f87171" : "#94a3b8";
+}
+
+function handlePayoutFile(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    if (payoutsFileName) payoutsFileName.textContent = file.name;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        const text = String(reader.result || "");
+        try {
+            const parsed = parseCsvRecipients(text);
+            payoutRecipients = parsed.recipients;
+            payoutAmounts = parsed.amounts;
+            payoutTotal = parsed.total;
+            renderPayoutPreview();
+            setPayoutStatus("CSV loaded. Review recipients before submitting.");
+        } catch (e) {
+            clearPayouts();
+            setPayoutStatus(e.message || "Failed to parse CSV.", true);
+        }
+    };
+    reader.readAsText(file);
+}
+
+function clearPayouts() {
+    payoutRecipients = [];
+    payoutAmounts = [];
+    payoutTotal = null;
+    if (payoutsFileInput) payoutsFileInput.value = "";
+    if (payoutsFileName) payoutsFileName.textContent = "No file selected.";
+    if (payoutsPreview) payoutsPreview.textContent = "No file loaded yet.";
+    if (payoutsSummary) payoutsSummary.textContent = "";
+    setPayoutStatus("");
+}
+
+function renderPayoutPreview() {
+    if (!payoutsPreview || !payoutsSummary) return;
+    if (payoutRecipients.length === 0) {
+        payoutsPreview.textContent = "No file loaded yet.";
+        payoutsSummary.textContent = "";
+        return;
+    }
+
+    const previewLines = payoutRecipients.slice(0, 5).map((recipient, index) => {
+        const amount = payoutAmounts[index];
+        return `${recipient} — ${formatUsdcAmount(amount)}`;
+    });
+    payoutsPreview.innerHTML = previewLines.join("<br>");
+    const remaining = payoutRecipients.length - previewLines.length;
+    if (remaining > 0) {
+        payoutsPreview.innerHTML += `<br>+ ${remaining} more recipients`;
+    }
+
+    const totalDisplay = payoutTotal ? formatUsdcAmount(payoutTotal) : "0";
+    payoutsSummary.textContent = `Total: ${totalDisplay} USDC`;
+}
+
+function parseCsvRecipients(csvText) {
+    const lines = csvText
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(Boolean);
+
+    if (lines.length === 0) {
+        throw new Error("CSV is empty.");
+    }
+
+    const header = lines[0].toLowerCase();
+    const startIndex = header.includes("address") || header.includes("recipient") ? 1 : 0;
+    const recipients = [];
+    const amounts = [];
+
+    for (let i = startIndex; i < lines.length; i++) {
+        const parts = lines[i].split(",").map(p => p.trim()).filter(Boolean);
+        if (parts.length < 2) continue;
+        const recipient = parts[0];
+        const amountStr = parts[1];
+        if (!ethers.isAddress(recipient)) {
+            throw new Error(`Invalid address on line ${i + 1}.`);
+        }
+        const amount = ethers.parseUnits(amountStr, 6);
+        recipients.push(recipient);
+        amounts.push(amount);
+    }
+
+    if (recipients.length === 0) {
+        throw new Error("No valid recipient rows found.");
+    }
+
+    const total = amounts.reduce((acc, val) => acc + val, 0n);
+    return { recipients, amounts, total };
+}
+
+function formatUsdcAmount(amount) {
+    try {
+        return Number(ethers.formatUnits(amount, 6)).toLocaleString(undefined, {
+            maximumFractionDigits: 6
+        });
+    } catch (e) {
+        return "0";
+    }
+}
+
+function getArcBatchConfig() {
+    const arc = getArcChain();
+    if (!arc) return null;
+    return {
+        batchContractAddress: arc.batchContractAddress,
+        usdcAddress: arc.usdcAddress,
+        chainId: arc.chainId,
+        explorer: arc.explorer
+    };
+}
+
+async function approveUsdcForPayouts() {
+    const config = getArcBatchConfig();
+    if (!config || !config.usdcAddress) {
+        setPayoutStatus("USDC address is not configured.", true);
+        return;
+    }
+    if (!config.batchContractAddress) {
+        setPayoutStatus("Batch contract is not deployed yet.", true);
+        return;
+    }
+    const eth = await waitForEthereum();
+    if (!eth) return showMetaMaskError();
+
+    try {
+        await ensureArcWalletChain();
+        const arcProvider = new ethers.BrowserProvider(window.ethereum);
+        await arcProvider.send("eth_requestAccounts", []);
+        const arcSigner = await arcProvider.getSigner();
+        const erc20 = new ethers.Contract(
+            config.usdcAddress,
+            [
+                "function approve(address spender, uint256 amount) public returns (bool)"
+            ],
+            arcSigner
+        );
+        setPayoutStatus("Confirm USDC approval in your wallet...");
+        const tx = await erc20.approve(config.batchContractAddress, ethers.MaxUint256);
+        setPayoutStatus(`Approval submitted: ${tx.hash}`);
+        await tx.wait();
+        setPayoutStatus("USDC approval confirmed.");
+    } catch (e) {
+        setPayoutStatus(e.message || "USDC approval failed.", true);
+    }
+}
+
+async function submitPayoutBatch() {
+    const config = getArcBatchConfig();
+    if (!config || !config.usdcAddress) {
+        setPayoutStatus("USDC address is not configured.", true);
+        return;
+    }
+    if (!config.batchContractAddress) {
+        setPayoutStatus("Batch contract is not deployed yet.", true);
+        return;
+    }
+    if (!payoutRecipients.length || !payoutAmounts.length) {
+        setPayoutStatus("Upload a CSV with recipients and amounts first.", true);
+        return;
+    }
+    if (!payoutsMemo || !payoutsMemo.value.trim()) {
+        setPayoutStatus("Add a compliance memo before submitting.", true);
+        return;
+    }
+
+    const eth = await waitForEthereum();
+    if (!eth) return showMetaMaskError();
+
+    try {
+        await ensureArcWalletChain();
+        const arcProvider = new ethers.BrowserProvider(window.ethereum);
+        await arcProvider.send("eth_requestAccounts", []);
+        const arcSigner = await arcProvider.getSigner();
+        const batch = new ethers.Contract(
+            config.batchContractAddress,
+            window.ARC_BATCH_ABI || [],
+            arcSigner
+        );
+
+        const memoHash = ethers.keccak256(ethers.toUtf8Bytes(payoutsMemo.value.trim()));
+        setPayoutStatus("Submitting batch payout... confirm in wallet.");
+        const tx = await batch.batchPayout(payoutRecipients, payoutAmounts, memoHash);
+        setPayoutStatus(`Batch submitted: ${tx.hash}`);
+        await tx.wait();
+        setPayoutStatus("Batch payout confirmed.");
+    } catch (e) {
+        setPayoutStatus(e.shortMessage || e.message || "Batch payout failed.", true);
+    }
 }
 
 function switchTab(tab) {

@@ -278,18 +278,32 @@
                     Upload a CSV, attach a compliance memo, and execute batch payouts on Arc.
                 </p>
                 <div class="mt-4 flex flex-wrap gap-3">
-                    <button class="btn">Upload CSV</button>
-                    <button class="btn btn-outline">Attach Memo</button>
+                    <input id="payouts-file" type="file" accept=".csv" style="display:none;">
+                    <button id="payouts-upload-btn" class="btn">Upload CSV</button>
+                    <button id="payouts-clear-btn" class="btn btn-outline">Clear</button>
                 </div>
+                <p id="payouts-file-name" class="text-slate-400 text-sm" style="margin-top:10px;">
+                    No file selected.
+                </p>
             </div>
             <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="card">
                     <h4>Recipients</h4>
-                    <p class="text-slate-400 text-sm" style="margin-top:6px;">No file loaded yet.</p>
+                    <div id="payouts-preview" class="text-slate-400 text-sm" style="margin-top:6px;">
+                        No file loaded yet.
+                    </div>
+                    <div id="payouts-summary" class="text-slate-400 text-sm" style="margin-top:10px;"></div>
                 </div>
                 <div class="card">
                     <h4>Compliance Note</h4>
                     <p class="text-slate-400 text-sm" style="margin-top:6px;">Add a single memo for the entire batch.</p>
+                    <textarea id="payouts-memo" rows="5" placeholder="Reason code, invoice, or policy reference"
+                        style="margin-top:10px; width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:#0f172a; color:#e5e7eb;"></textarea>
+                    <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+                        <button id="payouts-submit-btn" class="btn">Submit Batch</button>
+                        <button id="payouts-approve-btn" class="btn btn-outline">Approve USDC</button>
+                    </div>
+                    <p id="payouts-status" class="text-slate-400 text-sm" style="margin-top:10px;"></p>
                 </div>
             </div>
         </div>

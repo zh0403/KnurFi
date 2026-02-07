@@ -202,3 +202,36 @@ window.MT_NOTE_ABI = [
 
 // YOUR DEPLOYED ADDRESS
 window.MT_NOTE_ADDRESS = "0xb04D5E5234D5556b5B46600414763ff3829199fd";
+
+window.ARC_BATCH_ABI = [
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "sender", "type": "address" },
+      { "indexed": true, "internalType": "bytes32", "name": "memoHash", "type": "bytes32" },
+      { "indexed": false, "internalType": "uint256", "name": "totalAmount", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "count", "type": "uint256" },
+      { "indexed": false, "internalType": "bytes32", "name": "recipientsHash", "type": "bytes32" }
+    ],
+    "name": "BatchPayout",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      { "internalType": "address[]", "name": "recipients", "type": "address[]" },
+      { "internalType": "uint256[]", "name": "amounts", "type": "uint256[]" },
+      { "internalType": "bytes32", "name": "memoHash", "type": "bytes32" }
+    ],
+    "name": "batchPayout",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "usdc",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  }
+];
