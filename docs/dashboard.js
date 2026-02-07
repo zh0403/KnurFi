@@ -513,15 +513,28 @@ function downloadPayoutTemplate() {
         "0x3333333333333333333333333333333333333333,10"
     ];
     const csvContent = header + rows.join("\n") + "\n";
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "knurfi_payouts_template.csv";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const filename = "knurfi_payouts_template.csv";
+    try {
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+            window.navigator.msSaveOrOpenBlob(blob, filename);
+        } else {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            a.rel = "noopener";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        setPayoutStatus("Template downloaded.");
+    } catch (e) {
+        const dataUrl = "data:text/csv;charset=utf-8," + encodeURIComponent(csvContent);
+        window.open(dataUrl, "_blank", "noopener");
+        setPayoutStatus("Template opened in new tab.");
+    }
 }
 
 function renderPayoutPreview() {
