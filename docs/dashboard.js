@@ -696,13 +696,7 @@ async function updateApprovalState(forceRefresh) {
         const arcSigner = await getArcSigner();
         if (!arcSigner) return;
         const owner = await arcSigner.getAddress();
-        const erc20 = new ethers.Contract(
-            config.usdcAddress,
-            [
-                "function allowance(address owner, address spender) view returns (uint256)"
-            ],
-            arcSigner
-        );
+        const erc20 = getArcErc20(config.usdcAddress, arcSigner);
         const allowance = await erc20.allowance(owner, config.batchContractAddress);
         if (payoutsAllowance) payoutsAllowance.textContent = formatUsdcAmount(allowance);
         if (forceRefresh) {
@@ -724,6 +718,18 @@ async function updateApprovalState(forceRefresh) {
     }
 }
 
+function getArcErc20(tokenAddress, signer) {
+    return new ethers.Contract(
+        tokenAddress,
+        [
+            "function approve(address spender, uint256 amount) public returns (bool)",
+            "function allowance(address owner, address spender) view returns (uint256)",
+            "function balanceOf(address owner) view returns (uint256)"
+        ],
+        signer
+    );
+}
+
 async function approveUsdcForPayouts() {
     const config = getArcBatchConfig();
     if (!config || !config.usdcAddress) {
@@ -737,13 +743,7 @@ async function approveUsdcForPayouts() {
     try {
         const arcSigner = await getArcSigner();
         if (!arcSigner) return;
-        const erc20 = new ethers.Contract(
-            config.usdcAddress,
-            [
-                "function approve(address spender, uint256 amount) public returns (bool)"
-            ],
-            arcSigner
-        );
+        const erc20 = getArcErc20(config.usdcAddress, arcSigner);
         setPayoutStatus("Confirm USDC approval in your wallet...");
         const tx = await erc20.approve(config.batchContractAddress, ethers.MaxUint256);
         setPayoutStatus(`Approval submitted: ${tx.hash}`);
@@ -777,6 +777,15 @@ async function submitPayoutBatch() {
     try {
         const arcSigner = await getArcSigner();
         if (!arcSigner) return;
+        const owner = await arcSigner.getAddress();
+        const erc20 = getArcErc20(config.usdcAddress, arcSigner);
+        const balance = await erc20.balanceOf(owner);
+        if (balance < payoutTotal) {
+            const have = formatUsdcAmount(balance);
+            const need = formatUsdcAmount(payoutTotal);
+            setPayoutStatus(`Insufficient USDC balance. Have ${have}, need ${need}.`, true);
+            return;
+        }
         const batch = new ethers.Contract(
             config.batchContractAddress,
             window.ARC_BATCH_ABI || [],
@@ -786,15 +795,16 @@ async function submitPayoutBatch() {
         const memoHash = ethers.keccak256(ethers.toUtf8Bytes(payoutsMemo.value.trim()));
         setPayoutStatus("Submitting batch payout... confirm in wallet.");
         const tx = await batch.batchPayout(payoutRecipients, payoutAmounts, memoHash);
-        setPayoutStatus(`Batch submitted: ${tx.hash}`);
+        setPayoutStatus(`Batch submitted: ${tx.hash} — check status on Explorer.`);
         await tx.wait();
-        setPayoutStatus("Batch payout confirmed.");
+        setPayoutStatus("Batch payout confirmed. Check the transaction hash on Explorer.");
         if (payoutsTxLink) {
             payoutsTxLink.href = `${config.explorer}/tx/${tx.hash}`;
             payoutsTxLink.style.display = "inline-flex";
         }
     } catch (e) {
-        setPayoutStatus(e.shortMessage || e.message || "Batch payout failed.", true);
+        const message = e.shortMessage || e.message || "Batch payout failed.";
+        setPayoutStatus(message, true);
     }
 }
 
