@@ -35,7 +35,12 @@ const payoutsSummary = document.getElementById('payouts-summary');
 const payoutsMemo = document.getElementById('payouts-memo');
 const payoutsSubmitButton = document.getElementById('payouts-submit-btn');
 const payoutsApproveButton = document.getElementById('payouts-approve-btn');
+const payoutsRefreshAllowanceButton = document.getElementById('payouts-refresh-allowance-btn');
 const payoutsStatus = document.getElementById('payouts-status');
+const payoutsTxLink = document.getElementById('payouts-tx-link');
+const payoutsConfig = document.getElementById('payouts-config');
+const payoutsRequired = document.getElementById('payouts-required');
+const payoutsAllowance = document.getElementById('payouts-allowance');
 
 let payoutRecipients = [];
 let payoutAmounts = [];
@@ -87,11 +92,7 @@ function initializeChains() {
     if (chainSelect) {
         chainSelect.innerHTML = "";
         const entries = Object.entries(chains).filter(([, chain]) => chain.ledgerEnabled !== false);
-        if (entries.length <= 1) {
-            chainSelect.style.display = "none";
-        } else {
-            chainSelect.style.display = "";
-        }
+        chainSelect.style.display = "";
         entries.forEach(([key, chain]) => {
             const option = document.createElement("option");
             option.value = key;
@@ -230,6 +231,17 @@ function initializePayouts() {
     if (payoutsApproveButton) {
         payoutsApproveButton.onclick = approveUsdcForPayouts;
     }
+
+    if (payoutsRefreshAllowanceButton) {
+        payoutsRefreshAllowanceButton.onclick = () => updateApprovalState(true);
+    }
+
+    if (payoutsMemo) {
+        payoutsMemo.oninput = updatePayoutActionsState;
+    }
+
+    updatePayoutActionsState();
+    renderPayoutConfig();
 }
 
 // --- Polling Helper to wait for MetaMask ---
@@ -469,6 +481,10 @@ function setPayoutStatus(message, isError) {
     if (!payoutsStatus) return;
     payoutsStatus.textContent = message || "";
     payoutsStatus.style.color = isError ? "#f87171" : "#94a3b8";
+    if (payoutsTxLink) {
+        payoutsTxLink.style.display = "none";
+        payoutsTxLink.href = "#";
+    }
 }
 
 function handlePayoutFile(event) {
@@ -503,6 +519,7 @@ function clearPayouts() {
     if (payoutsPreview) payoutsPreview.textContent = "No file loaded yet.";
     if (payoutsSummary) payoutsSummary.textContent = "";
     setPayoutStatus("");
+    updatePayoutActionsState();
 }
 
 function downloadPayoutTemplate() {
@@ -542,6 +559,8 @@ function renderPayoutPreview() {
     if (payoutRecipients.length === 0) {
         payoutsPreview.textContent = "No file loaded yet.";
         payoutsSummary.textContent = "";
+        if (payoutsRequired) payoutsRequired.textContent = "0";
+        if (payoutsAllowance) payoutsAllowance.textContent = "-";
         return;
     }
 
@@ -557,6 +576,9 @@ function renderPayoutPreview() {
 
     const totalDisplay = payoutTotal ? formatUsdcAmount(payoutTotal) : "0";
     payoutsSummary.textContent = `Total: ${totalDisplay} USDC`;
+    if (payoutsRequired) payoutsRequired.textContent = totalDisplay;
+    updatePayoutActionsState();
+    updateApprovalState();
 }
 
 function parseCsvRecipients(csvText) {
@@ -616,6 +638,78 @@ function getArcBatchConfig() {
     };
 }
 
+function renderPayoutConfig() {
+    if (!payoutsConfig) return;
+    const config = getArcBatchConfig();
+    if (!config) {
+        payoutsConfig.textContent = "Arc configuration unavailable.";
+        return;
+    }
+    const contract = config.batchContractAddress || "Not deployed";
+    const usdc = config.usdcAddress || "Missing";
+    payoutsConfig.innerHTML = `
+        <div>Arc USDC: <span style="color:#e2e8f0;">${usdc}</span></div>
+        <div>Batch Contract: <span style="color:#e2e8f0;">${contract}</span></div>
+    `;
+}
+
+function updatePayoutActionsState() {
+    const hasCsv = payoutRecipients.length > 0;
+    const hasMemo = payoutsMemo && payoutsMemo.value.trim().length > 0;
+    if (payoutsSubmitButton) {
+        payoutsSubmitButton.disabled = !(hasCsv && hasMemo);
+        payoutsSubmitButton.style.opacity = payoutsSubmitButton.disabled ? "0.6" : "1";
+    }
+}
+
+async function getArcSigner() {
+    const eth = await waitForEthereum();
+    if (!eth) {
+        showMetaMaskError();
+        return null;
+    }
+    await ensureArcWalletChain();
+    const arcProvider = new ethers.BrowserProvider(window.ethereum);
+    await arcProvider.send("eth_requestAccounts", []);
+    return arcProvider.getSigner();
+}
+
+async function updateApprovalState(forceRefresh) {
+    const config = getArcBatchConfig();
+    if (!config || !config.usdcAddress || !config.batchContractAddress) return;
+    if (!payoutTotal || payoutTotal <= 0n) return;
+    try {
+        const arcSigner = await getArcSigner();
+        if (!arcSigner) return;
+        const owner = await arcSigner.getAddress();
+        const erc20 = new ethers.Contract(
+            config.usdcAddress,
+            [
+                "function allowance(address owner, address spender) view returns (uint256)"
+            ],
+            arcSigner
+        );
+        const allowance = await erc20.allowance(owner, config.batchContractAddress);
+        if (payoutsAllowance) payoutsAllowance.textContent = formatUsdcAmount(allowance);
+        if (forceRefresh) {
+            setPayoutStatus("Allowance refreshed.");
+        }
+        if (payoutsApproveButton) {
+            if (allowance >= payoutTotal) {
+                payoutsApproveButton.textContent = "Approved";
+                payoutsApproveButton.disabled = true;
+                payoutsApproveButton.style.opacity = "0.6";
+            } else {
+                payoutsApproveButton.textContent = "Approve USDC";
+                payoutsApproveButton.disabled = false;
+                payoutsApproveButton.style.opacity = "1";
+            }
+        }
+    } catch (e) {
+        setPayoutStatus("Could not check USDC allowance.", true);
+    }
+}
+
 async function approveUsdcForPayouts() {
     const config = getArcBatchConfig();
     if (!config || !config.usdcAddress) {
@@ -626,14 +720,9 @@ async function approveUsdcForPayouts() {
         setPayoutStatus("Batch contract is not deployed yet.", true);
         return;
     }
-    const eth = await waitForEthereum();
-    if (!eth) return showMetaMaskError();
-
     try {
-        await ensureArcWalletChain();
-        const arcProvider = new ethers.BrowserProvider(window.ethereum);
-        await arcProvider.send("eth_requestAccounts", []);
-        const arcSigner = await arcProvider.getSigner();
+        const arcSigner = await getArcSigner();
+        if (!arcSigner) return;
         const erc20 = new ethers.Contract(
             config.usdcAddress,
             [
@@ -646,6 +735,7 @@ async function approveUsdcForPayouts() {
         setPayoutStatus(`Approval submitted: ${tx.hash}`);
         await tx.wait();
         setPayoutStatus("USDC approval confirmed.");
+        await updateApprovalState();
     } catch (e) {
         setPayoutStatus(e.message || "USDC approval failed.", true);
     }
@@ -670,14 +760,9 @@ async function submitPayoutBatch() {
         return;
     }
 
-    const eth = await waitForEthereum();
-    if (!eth) return showMetaMaskError();
-
     try {
-        await ensureArcWalletChain();
-        const arcProvider = new ethers.BrowserProvider(window.ethereum);
-        await arcProvider.send("eth_requestAccounts", []);
-        const arcSigner = await arcProvider.getSigner();
+        const arcSigner = await getArcSigner();
+        if (!arcSigner) return;
         const batch = new ethers.Contract(
             config.batchContractAddress,
             window.ARC_BATCH_ABI || [],
@@ -690,6 +775,10 @@ async function submitPayoutBatch() {
         setPayoutStatus(`Batch submitted: ${tx.hash}`);
         await tx.wait();
         setPayoutStatus("Batch payout confirmed.");
+        if (payoutsTxLink) {
+            payoutsTxLink.href = `${config.explorer}/tx/${tx.hash}`;
+            payoutsTxLink.style.display = "inline-flex";
+        }
     } catch (e) {
         setPayoutStatus(e.shortMessage || e.message || "Batch payout failed.", true);
     }

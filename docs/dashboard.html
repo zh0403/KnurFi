@@ -277,6 +277,7 @@
                 <p class="text-slate-400 text-sm" style="margin-top:6px;">
                     Upload a CSV, attach a compliance memo, and execute batch payouts on Arc.
                 </p>
+                <div id="payouts-config" class="text-slate-400 text-xs" style="margin-top:10px; line-height:1.6;"></div>
                 <div class="mt-4 flex flex-wrap gap-3">
                     <input id="payouts-file" type="file" accept=".csv" style="display:none;">
                     <button id="payouts-upload-btn" class="btn">Upload CSV</button>
@@ -303,8 +304,14 @@
                     <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
                         <button id="payouts-submit-btn" class="btn">Submit Batch</button>
                         <button id="payouts-approve-btn" class="btn btn-outline">Approve USDC</button>
+                        <button id="payouts-refresh-allowance-btn" class="btn btn-outline">Refresh Allowance</button>
+                    </div>
+                    <div class="text-slate-400 text-xs" style="margin-top:8px; line-height:1.6;">
+                        <div>Required Total: <span id="payouts-required">0</span> USDC</div>
+                        <div>Current Allowance: <span id="payouts-allowance">-</span> USDC</div>
                     </div>
                     <p id="payouts-status" class="text-slate-400 text-sm" style="margin-top:10px;"></p>
+                    <a id="payouts-tx-link" class="text-slate-400 text-sm" style="margin-top:6px; display:none;" target="_blank" rel="noopener">View on Explorer</a>
                 </div>
             </div>
         </div>
