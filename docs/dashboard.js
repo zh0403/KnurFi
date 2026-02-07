@@ -78,7 +78,7 @@ const ENS_RPC_URL = "https://rpc.sepolia.org";
 let ensNameCache = null;
 
 const BRIDGE_STORAGE_KEY = "knurfiBridgeActivity";
-const LIFI_WIDGET_BASE_URL = "https://playground.li.fi/";
+const LIFI_WIDGET_BASE_URL = "https://widget.li.fi/";
 
 let payoutRecipients = [];
 let payoutAmounts = [];
@@ -360,7 +360,7 @@ async function resolveEnsName() {
         if (!name) {
             ensNameCache = null;
             if (ensNameEl) ensNameEl.textContent = "No ENS name found";
-            setEnsStatus("No ENS name found for this address.");
+            setEnsStatus("No ENS name found on Sepolia. Mainnet ENS names won't appear here.");
             updateEnsWriteState();
             return;
         }
@@ -1124,6 +1124,11 @@ async function loadRecentBatches() {
         payoutsBatchesList.textContent = "Batch contract not configured.";
         return;
     }
+    if (!window.ARC_BATCH_ABI || window.ARC_BATCH_ABI.length === 0) {
+        payoutsBatchesList.textContent = "Batch ABI missing. Reload the page.";
+        setPayoutStatus("Batch ABI missing. Check abi.js.", true);
+        return;
+    }
 
     try {
         payoutsBatchesList.textContent = "Loading batch history...";
@@ -1164,7 +1169,11 @@ async function loadRecentBatches() {
             };
         });
     } catch (e) {
+        const message = e && (e.shortMessage || e.reason || e.message)
+            ? (e.shortMessage || e.reason || e.message)
+            : "Failed to load batch history.";
         payoutsBatchesList.textContent = "Failed to load batch history.";
+        setPayoutStatus(message, true);
     }
 }
 
@@ -1360,6 +1369,11 @@ function switchTab(tab) {
     if (pageTitle && pageSubtitle && titles[tab]) {
         pageTitle.innerText = titles[tab].title;
         pageSubtitle.innerText = titles[tab].subtitle;
+    }
+
+    if (unlockButton) {
+        const shouldShow = tab === "overview" && isConnected;
+        unlockButton.style.display = shouldShow ? "inline-flex" : "none";
     }
 }
 

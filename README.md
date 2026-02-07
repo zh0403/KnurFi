@@ -1,6 +1,6 @@
 # 📘 KnurFi: The Context Layer for On-Chain Finance
 
-**KnurFi** is a multi-chain treasury dashboard that lets teams attach encrypted, permanent notes to on-chain transactions.
+**KnurFi** is a multi-chain treasury dashboard that lets teams attach encrypted, permanent notes to on-chain transactions and payouts.
 
 ![Dashboard Screenshot](docs/dashboard.png)
 
@@ -9,28 +9,36 @@ Blockchain transactions are cryptic. Months after a transaction, users forget wh
 
 ## 💡 The Solution
 KnurFi injects a "Context Layer" directly into the block explorer and dashboard workflows.
-* **Write:** Add notes to any tx on Sepolia Etherscan.
-* **Encrypt:** Notes are AES-encrypted with your wallet signature (Client-Side).
+* **Write:** Add notes to any tx on Sepolia Etherscan (extension).
+* **Encrypt:** Notes are AES-encrypted with your wallet signature (client-side).
 * **Store:** Encrypted data is stored on-chain (Ethereum Sepolia).
-* **Manage:** A dedicated Dashboard to view, search, and export your treasury history.
+* **Manage:** Dashboard tabs for ledger, batch payouts, ENS metadata, and bridge notes.
+
+## ✨ Key Features
+* **Profile + ENS (Sepolia):** Resolve ENS, read/write `com.knurfi.metadata`.
+* **Ledger (Sepolia):** Encrypted note history with CSV export.
+* **Payouts (Arc Testnet):** Batch USDC payouts with memo hash logging.
+* **Bridge (LI.FI):** Embedded widget + cross-chain memo capture.
+* **Chrome Extension:** Write notes directly on Sepolia tx pages.
 
 ## 🛠️ Tech Stack
-* **Frontend:** HTML/JS, Chrome Extension Manifest V3
-* **Blockchain:** Ethereum Sepolia Testnet
-* **Smart Contract:** Solidity (Ownable, Monetizable)
+* **Frontend:** HTML/JS, Tailwind (CDN), Chrome Extension Manifest V3
+* **Blockchain:** Ethereum Sepolia (ledger + ENS), Arc Testnet (payouts)
+* **Smart Contracts:** Solidity (Hardhat)
 * **Libraries:** Ethers.js, Crypto-JS
-
-## 💰 Business Model
-1.  **Micro-Fees:** Protocol charges a small fee (e.g., 0.0005 ETH) per note (Currently 0 for Hackathon).
-2.  **Freemium Dashboard:** Advanced analytics and CSV export for "Pro" users.
 
 ## ⚙️ How to Run Locally
 
-### 1. The Smart Contract
+### 1. The Smart Contracts
 ```bash
 cd contracts-backend
 npm install
 npx hardhat run scripts/deploy.js --network sepolia
+```
+
+Optional: deploy Arc batch payouts
+```bash
+npx hardhat run scripts/deploy_arc_batch.js --network arcTestnet
 ```
 
 ### 2. The Extension
@@ -40,14 +48,21 @@ Enable "Developer Mode" (top right).
 
 Click "Load Unpacked" and select the `extension` folder.
 
-Go to `Explorer`.
+Supported explorers:
+* Sepolia Etherscan: `https://sepolia.etherscan.io/tx/*`
+* ArcScan: `https://testnet.arcscan.app/tx/*` (notes disabled, read-only)
 
 ### 3. The Dashboard
 Open `docs/dashboard.html` in your browser (via Live Server) or visit the live link below.
 
+## ✅ Smoke Tests
+```bash
+node tests/smoke.test.js
+```
+
 🔗 Links
 Live Demo: https://zh0403.github.io/KnurFi/dashboard.html
 
-Demo Video: 
+Demo Video:
 
-Contract: 0xb04D5E5234D5556b5B46600414763ff3829199fd
+Sepolia Contract: 0xb04D5E5234D5556b5B46600414763ff3829199fd
