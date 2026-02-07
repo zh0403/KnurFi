@@ -803,7 +803,15 @@ async function submitPayoutBatch() {
             payoutsTxLink.style.display = "inline-flex";
         }
     } catch (e) {
-        const message = e.shortMessage || e.message || "Batch payout failed.";
+        const raw = (e.shortMessage || e.reason || e.message || "").toLowerCase();
+        let message = e.shortMessage || e.reason || e.message || "Batch payout failed.";
+        if (raw.includes("transfer amount exceeds balance")) {
+            message = "Insufficient USDC balance for this batch.";
+        } else if (raw.includes("insufficient allowance")) {
+            message = "USDC allowance too low. Please approve USDC.";
+        } else if (raw.includes("user rejected") || raw.includes("user denied")) {
+            message = "Transaction was rejected in the wallet.";
+        }
         setPayoutStatus(message, true);
     }
 }
