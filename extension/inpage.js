@@ -12,7 +12,7 @@ const LEDGER_ENABLED = HOST === "sepolia.etherscan.io";
 // Ensure the address is set (Safety check)
 // Replace with your ACTUAL contract address if different
 const CONTRACT_ADDRESS = LEDGER_ENABLED
-    ? (window.MT_NOTE_ADDRESS || "0xb04D5E5234D5556b5B46600414763ff3829199fd")
+    ? (window.KNURFI_ADDRESS || "0x3489864DC6ea7440FA54472662A50Bb26BBDD13F")
     : null;
 let GLOBAL_KEY = null; // We store the key here after they sign once
 
@@ -249,7 +249,7 @@ async function checkExistingNote(txHash) {
 
     try {
         const provider = new ethers.BrowserProvider(window.ethereum);
-        const contract = new ethers.Contract(CONTRACT_ADDRESS, window.MT_NOTE_ABI, provider);
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, window.KNURFI_ABI, provider);
         const accounts = await provider.listAccounts();
         if (accounts.length === 0) return;
         
@@ -326,7 +326,7 @@ async function getContract() {
     }
 
     const signer = await provider.getSigner();
-    return new ethers.Contract(CONTRACT_ADDRESS, window.MT_NOTE_ABI, signer);
+    return new ethers.Contract(CONTRACT_ADDRESS, window.KNURFI_ABI, signer);
 }
 
 // Wait for ethers.js to load, then start

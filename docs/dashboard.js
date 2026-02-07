@@ -1,6 +1,6 @@
 // dashboard.js
 
-const FALLBACK_CONTRACT_ADDRESS = window.MT_NOTE_ADDRESS || "0xb04D5E5234D5556b5B46600414763ff3829199fd";
+const FALLBACK_CONTRACT_ADDRESS = window.KNURFI_ADDRESS || "0x3489864DC6ea7440FA54472662A50Bb26BBDD13F";
 let provider, signer, contract;
 let allEvents = []; // Store raw events here
 let isConnected = false;
@@ -698,7 +698,7 @@ async function initDashboard() {
             return;
         }
 
-        contract = new ethers.Contract(contractAddress, window.MT_NOTE_ABI, signer);
+        contract = new ethers.Contract(contractAddress, window.KNURFI_ABI, signer);
         
         console.log("Querying Contract:", contractAddress, "For User:", address);
 

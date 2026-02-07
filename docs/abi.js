@@ -1,5 +1,5 @@
 // abi.js
-window.MT_NOTE_ABI = [
+window.KNURFI_ABI = [
   {
     "inputs": [],
     "stateMutability": "nonpayable",
@@ -201,7 +201,7 @@ window.MT_NOTE_ABI = [
 ];
 
 // YOUR DEPLOYED ADDRESS
-window.MT_NOTE_ADDRESS = "0xb04D5E5234D5556b5B46600414763ff3829199fd";
+window.KNURFI_ADDRESS = "0x3489864DC6ea7440FA54472662A50Bb26BBDD13F";
 
 window.ARC_BATCH_ABI = [
   {

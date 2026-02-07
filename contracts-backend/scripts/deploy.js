@@ -1,15 +1,15 @@
 const hre = require("hardhat");
 
 async function main() {
-  console.log("🚀 Deploying mt_note to Ethereum Sepolia...");
+  console.log("🚀 Deploying KnurFi to Ethereum Sepolia...");
 
-  const mt_noteFactory = await hre.ethers.getContractFactory("mt_note");
-  const mt_note = await mt_noteFactory.deploy();
+  const knurfiFactory = await hre.ethers.getContractFactory("KnurFi");
+  const knurfi = await knurfiFactory.deploy();
 
-  await mt_note.waitForDeployment();
+  await knurfi.waitForDeployment();
 
-  const address = await mt_note.getAddress();
-  console.log(`✅ mt_note deployed to: ${address}`);
+  const address = await knurfi.getAddress();
+  console.log(`✅ KnurFi deployed to: ${address}`);
   console.log(`👉 SAVE THIS ADDRESS! You need it for the Chrome Extension.`);
 }
 

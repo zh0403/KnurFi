@@ -1,15 +1,15 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-describe("mt_note Contract", function () {
-  let mt_note;
+describe("KnurFi Contract", function () {
+  let knurfi;
   let owner;
 
   // Runs before every test
   beforeEach(async function () {
     [owner] = await ethers.getSigners();
-    const mt_noteFactory = await ethers.getContractFactory("mt_note");
-    mt_note = await mt_noteFactory.deploy();
+    const knurfiFactory = await ethers.getContractFactory("KnurFi");
+    knurfi = await knurfiFactory.deploy();
   });
 
   it("Should save and retrieve a note correctly", async function () {
@@ -19,12 +19,12 @@ describe("mt_note Contract", function () {
 
     // 2. Add the note
     console.log("📝 Adding note...");
-    const tx = await mt_note.addNote(fakeTxHash, fakeIpfsCid);
+    const tx = await knurfi.addNote(fakeTxHash, fakeIpfsCid);
     await tx.wait(); // Wait for block to be mined
 
     // 3. Verify it exists
     console.log("🔍 Retrieving note...");
-    const storedCid = await mt_note.getNote(owner.address, fakeTxHash);
+    const storedCid = await knurfi.getNote(owner.address, fakeTxHash);
     
     expect(storedCid).to.equal(fakeIpfsCid);
     console.log("✅ Success! Retrieved CID matches:", storedCid);
@@ -34,8 +34,8 @@ describe("mt_note Contract", function () {
     const fakeTxHash = ethers.id("some transaction");
     const fakeIpfsCid = "QmAnotherHash";
 
-    await expect(mt_note.addNote(fakeTxHash, fakeIpfsCid))
-      .to.emit(mt_note, "NoteLog")
+    await expect(knurfi.addNote(fakeTxHash, fakeIpfsCid))
+      .to.emit(knurfi, "NoteLog")
       .withArgs(owner.address, fakeTxHash, fakeIpfsCid, (val) => val > 0); // timestamp check
   });
 });

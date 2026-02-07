@@ -65,4 +65,4 @@ Live Demo: https://zh0403.github.io/KnurFi/dashboard.html
 
 Demo Video:
 
-Sepolia Contract: 0xb04D5E5234D5556b5B46600414763ff3829199fd
+Sepolia Contract: 0x3489864DC6ea7440FA54472662A50Bb26BBDD13F

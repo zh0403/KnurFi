@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/access/Ownable.sol"; // Use OpenZeppelin for security
 
-contract mt_note is Ownable {
+contract KnurFi is Ownable {
     
     // --- Revenue Model ---
     uint256 public noteFee = 0; // Initially 0 for Hackathon judges!
