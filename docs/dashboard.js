@@ -41,6 +41,10 @@ const payoutsTxLink = document.getElementById('payouts-tx-link');
 const payoutsConfig = document.getElementById('payouts-config');
 const payoutsRequired = document.getElementById('payouts-required');
 const payoutsAllowance = document.getElementById('payouts-allowance');
+const payoutsPreviewAllButton = document.getElementById('payouts-preview-all-btn');
+const payoutsModal = document.getElementById('payouts-modal');
+const payoutsModalBody = document.getElementById('payouts-modal-body');
+const payoutsModalClose = document.getElementById('payouts-modal-close');
 
 let payoutRecipients = [];
 let payoutAmounts = [];
@@ -234,6 +238,14 @@ function initializePayouts() {
 
     if (payoutsRefreshAllowanceButton) {
         payoutsRefreshAllowanceButton.onclick = () => updateApprovalState(true);
+    }
+
+    if (payoutsPreviewAllButton) {
+        payoutsPreviewAllButton.onclick = openPayoutsModal;
+    }
+
+    if (payoutsModalClose) {
+        payoutsModalClose.onclick = closePayoutsModal;
     }
 
     if (payoutsMemo) {
@@ -532,6 +544,7 @@ function clearPayouts() {
     if (payoutsFileName) payoutsFileName.textContent = "No file selected.";
     if (payoutsPreview) payoutsPreview.textContent = "No file loaded yet.";
     if (payoutsSummary) payoutsSummary.textContent = "";
+    closePayoutsModal();
     setPayoutStatus("");
     updatePayoutActionsState();
 }
@@ -591,6 +604,7 @@ function renderPayoutPreview() {
     const totalDisplay = payoutTotal ? formatUsdcAmount(payoutTotal) : "0";
     payoutsSummary.textContent = `Total: ${totalDisplay} USDC`;
     if (payoutsRequired) payoutsRequired.textContent = totalDisplay;
+    renderPayoutsModalBody();
     updatePayoutActionsState();
     updateApprovalState();
 }
@@ -674,6 +688,34 @@ function updatePayoutActionsState() {
         payoutsSubmitButton.disabled = !(hasCsv && hasMemo);
         payoutsSubmitButton.style.opacity = payoutsSubmitButton.disabled ? "0.6" : "1";
     }
+    if (payoutsPreviewAllButton) {
+        payoutsPreviewAllButton.disabled = !hasCsv;
+        payoutsPreviewAllButton.style.opacity = hasCsv ? "1" : "0.6";
+    }
+}
+
+function renderPayoutsModalBody() {
+    if (!payoutsModalBody) return;
+    if (!payoutRecipients.length) {
+        payoutsModalBody.textContent = "No recipients loaded.";
+        return;
+    }
+    const rows = payoutRecipients.map((recipient, index) => {
+        const amount = payoutAmounts[index];
+        return `${index + 1}. ${recipient} — ${formatUsdcAmount(amount)} USDC`;
+    });
+    payoutsModalBody.innerHTML = rows.join("<br>");
+}
+
+function openPayoutsModal() {
+    if (!payoutsModal) return;
+    renderPayoutsModalBody();
+    payoutsModal.style.display = "block";
+}
+
+function closePayoutsModal() {
+    if (!payoutsModal) return;
+    payoutsModal.style.display = "none";
 }
 
 async function getArcSigner() {

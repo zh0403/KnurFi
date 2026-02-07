@@ -295,6 +295,7 @@
                         No file loaded yet.
                     </div>
                     <div id="payouts-summary" class="text-slate-400 text-sm" style="margin-top:10px;"></div>
+                    <button id="payouts-preview-all-btn" class="btn btn-outline" style="margin-top:12px;">Preview All Recipients</button>
                 </div>
                 <div class="card">
                     <h4>Compliance Note</h4>
@@ -358,6 +359,16 @@
     <script src="abi.js"></script>
     <script src="chain-config.js"></script>
     <script src="dashboard.js"></script>
+
+    <div id="payouts-modal" style="display:none; position:fixed; inset:0; background:rgba(2,6,23,0.7); z-index:50;">
+        <div style="max-width:720px; margin:60px auto; background:#0b1120; border:1px solid var(--border); border-radius:12px; padding:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="margin:0;">All Recipients</h3>
+                <button id="payouts-modal-close" class="btn btn-outline">Close</button>
+            </div>
+            <div id="payouts-modal-body" style="margin-top:16px; max-height:420px; overflow:auto; font-size:13px; color:#cbd5e1;"></div>
+        </div>
+    </div>
 
 </body>
 </html>
