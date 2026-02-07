@@ -698,7 +698,9 @@ async function updateApprovalState(forceRefresh) {
         const owner = await arcSigner.getAddress();
         const erc20 = getArcErc20(config.usdcAddress, arcSigner);
         const allowance = await erc20.allowance(owner, config.batchContractAddress);
-        if (payoutsAllowance) payoutsAllowance.textContent = formatUsdcAmount(allowance);
+        if (payoutsAllowance) {
+            payoutsAllowance.textContent = formatAllowanceDisplay(allowance);
+        }
         if (forceRefresh) {
             setPayoutStatus("Allowance refreshed.");
         }
@@ -716,6 +718,13 @@ async function updateApprovalState(forceRefresh) {
     } catch (e) {
         setPayoutStatus("Could not check USDC allowance.", true);
     }
+}
+
+function formatAllowanceDisplay(amount) {
+    if (amount >= ethers.MaxUint256 / 2n) {
+        return "Unlimited";
+    }
+    return formatUsdcAmount(amount);
 }
 
 function getArcErc20(tokenAddress, signer) {
