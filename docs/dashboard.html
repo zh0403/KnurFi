@@ -270,6 +270,21 @@
             </div>
             <div class="mt-6">
                 <div class="card">
+                    <h4>ENS Debug</h4>
+                    <p class="text-slate-400 text-sm" style="margin-top:6px;">
+                        Helps verify primary name resolution on mainnet.
+                    </p>
+                    <div class="text-slate-400 text-xs" style="margin-top:10px; line-height:1.6;">
+                        <div>Connected Address: <span id="ens-debug-address">-</span></div>
+                        <div>Reverse Lookup Name: <span id="ens-debug-lookup">-</span></div>
+                        <div>Forward Resolve Address: <span id="ens-debug-forward">-</span></div>
+                    </div>
+                    <p id="ens-debug-status" class="text-slate-400 text-xs" style="margin-top:8px;"></p>
+                    <button id="ens-debug-refresh" class="btn btn-outline" style="margin-top:10px; padding:6px 12px;">Refresh Debug</button>
+                </div>
+            </div>
+            <div class="mt-6">
+                <div class="card">
                     <h4>Export</h4>
                     <p style="color: var(--text-muted); font-size: 13px; margin-top:4px;">
                         Download your currently loaded ledger as a CSV file.
