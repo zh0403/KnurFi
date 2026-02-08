@@ -77,10 +77,15 @@ const ensGenerateSaltButton = document.getElementById('ens-generate-salt');
 const ensCopySaltButton = document.getElementById('ens-copy-salt');
 const ensUseNameButton = document.getElementById('ens-use-name');
 const ensRecordUpdated = document.getElementById('ens-record-updated');
+const ensDebugAddress = document.getElementById('ens-debug-address');
+const ensDebugLookup = document.getElementById('ens-debug-lookup');
+const ensDebugForward = document.getElementById('ens-debug-forward');
+const ensDebugStatus = document.getElementById('ens-debug-status');
+const ensDebugRefresh = document.getElementById('ens-debug-refresh');
 
 const ENS_RECORD_KEY = "com.knurfi.metadata";
 const ENS_RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
-const ENS_MAINNET_RPC_URL = "https://cloudflare-eth.com";
+const ENS_MAINNET_RPC_URL = "wss://ethereum-rpc.publicnode.com";
 const ENS_REGISTRY_ADDRESS = "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e";
 const ENS_RESOLVER_ABI = [
     "function setText(bytes32 node, string key, string value) external",
@@ -89,7 +94,7 @@ const ENS_RESOLVER_ABI = [
 let ensNameCache = null;
 
 const BRIDGE_STORAGE_KEY = "knurfiBridgeActivity";
-const LIFI_WIDGET_BASE_URL = "https://widget.li.fi/";
+const LIFI_WIDGET_BASE_URL = "https://widget.li.fi/?integrator=KnurFi";
 
 let payoutRecipients = [];
 let payoutAmounts = [];
@@ -377,7 +382,7 @@ function getEnsReadProvider() {
 }
 
 function getEnsMainnetProvider() {
-    return new ethers.JsonRpcProvider(ENS_MAINNET_RPC_URL, {
+    return new ethers.WebSocketProvider(ENS_MAINNET_RPC_URL, {
         name: "homestead",
         chainId: 1,
         ensAddress: ENS_REGISTRY_ADDRESS
@@ -444,8 +449,41 @@ async function resolveEnsName() {
         if (ensNameEl) ensNameEl.textContent = name;
         setEnsStatus("ENS name resolved.");
         updateEnsWriteState();
+        updateEnsDebug();
     } catch (e) {
         setEnsStatus("Failed to resolve ENS name.", true);
+    }
+}
+
+async function updateEnsDebug() {
+    if (!ensDebugAddress || !ensDebugLookup || !ensDebugForward || !ensDebugStatus) return;
+    if (!currentAddress) {
+        ensDebugAddress.textContent = "-";
+        ensDebugLookup.textContent = "-";
+        ensDebugForward.textContent = "-";
+        ensDebugStatus.textContent = "Connect your wallet first.";
+        return;
+    }
+    ensDebugAddress.textContent = currentAddress;
+    ensDebugStatus.textContent = "Checking mainnet reverse/forward resolution...";
+    try {
+        const provider = getEnsMainnetProvider();
+        const name = await provider.lookupAddress(currentAddress);
+        ensDebugLookup.textContent = name || "-";
+        if (name) {
+            const forward = await provider.resolveName(name);
+            ensDebugForward.textContent = forward || "-";
+            if (forward && forward.toLowerCase() === currentAddress.toLowerCase()) {
+                ensDebugStatus.textContent = "Primary name is correctly configured on mainnet.";
+            } else {
+                ensDebugStatus.textContent = "Reverse record exists, but forward resolution does not match.";
+            }
+        } else {
+            ensDebugForward.textContent = "-";
+            ensDebugStatus.textContent = "No reverse record found on mainnet.";
+        }
+    } catch (e) {
+        ensDebugStatus.textContent = "Failed to query mainnet ENS.";
     }
 }
 
@@ -645,6 +683,9 @@ function initializeEns() {
     }
     if (ensUseNameButton) {
         ensUseNameButton.onclick = useManualEnsName;
+    }
+    if (ensDebugRefresh) {
+        ensDebugRefresh.onclick = updateEnsDebug;
     }
     updateEnsWriteState();
     if (window.ethereum && window.ethereum.on) {
