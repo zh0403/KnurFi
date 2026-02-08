@@ -79,7 +79,7 @@ const ensUseNameButton = document.getElementById('ens-use-name');
 const ensRecordUpdated = document.getElementById('ens-record-updated');
 
 const ENS_RECORD_KEY = "com.knurfi.metadata";
-const ENS_RPC_URL = "https://ethereum-sepolia.publicnode.com";
+const ENS_RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
 const ENS_REGISTRY_ADDRESS = "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e";
 const ENS_RESOLVER_ABI = [
     "function setText(bytes32 node, string key, string value) external",
