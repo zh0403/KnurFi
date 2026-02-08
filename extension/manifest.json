@@ -4,16 +4,16 @@
     "version": "1.0",
     "description": "Context layer for on-chain finance with encrypted notes.",
 
-    "icons": {
-      "16": "icon.png",
-      "48": "icon.png",
-      "128": "icon.png"
-    },
+  "icons": {
+    "16": "logo_512px.png",
+    "48": "logo_512px.png",
+    "128": "logo_512px.png"
+  },
 
-    "action": {
-        "default_popup": "popup.html",
-        "default_icon": "icon.png"
-    },
+  "action": {
+      "default_popup": "popup.html",
+      "default_icon": "logo_512px.png"
+  },
 
     "content_scripts": [
       {
@@ -25,10 +25,10 @@
     
     "permissions": ["storage"],
     "host_permissions": ["https://sepolia.etherscan.io/*", "https://testnet.arcscan.app/*"],
-    "web_accessible_resources": [
-      {
-        "resources": ["ethers.js", "crypto-js.js", "abi.js", "inpage.js", "icon.png"],
-        "matches": ["<all_urls>"]
-      }
-    ]
+  "web_accessible_resources": [
+    {
+      "resources": ["ethers.js", "crypto-js.js", "abi.js", "inpage.js", "logo_512px.png"],
+      "matches": ["<all_urls>"]
+    }
+  ]
   }
