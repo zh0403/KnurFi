@@ -418,10 +418,13 @@
                 <div class="card" style="margin-top:16px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
                         <h4>LI.FI Widget</h4>
-                        <a id="bridge-widget-link" class="text-slate-400 text-xs" href="https://playground.li.fi/" target="_blank" rel="noopener">Open in new tab</a>
+                        <a id="bridge-widget-link" class="text-slate-400 text-xs" href="https://widget.li.fi/?integrator=KnurFi" target="_blank" rel="noopener">Open in new tab</a>
                     </div>
                     <div id="bridge-widget" style="margin-top:12px;">
-                        <iframe id="bridge-widget-frame" title="LI.FI Widget" style="width:100%; min-height:560px; border:1px solid var(--border); border-radius:12px; background:#0f172a;"></iframe>
+                        <div id="lifi-widget-root" style="min-height:560px; border:1px solid var(--border); border-radius:12px; background:#0f172a;"></div>
+                        <div id="lifi-widget-error" class="text-slate-400 text-xs" style="margin-top:8px; display:none;">
+                            Widget failed to load. Use "Open in new tab" as a fallback.
+                        </div>
                     </div>
                 </div>
                 <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -473,6 +476,7 @@
     <script src="abi.js"></script>
     <script src="chain-config.js"></script>
     <script src="dashboard.js"></script>
+    <script type="module" src="lifi-widget.js"></script>
 
     <div id="payouts-modal" style="display:none; position:fixed; inset:0; background:rgba(2,6,23,0.7); z-index:50;">
         <div style="max-width:720px; margin:60px auto; background:#0b1120; border:1px solid var(--border); border-radius:12px; padding:20px;">
