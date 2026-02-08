@@ -83,7 +83,7 @@ const ENS_RPC_URL = "https://ethereum-sepolia.publicnode.com";
 const ENS_REGISTRY_ADDRESS = "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e";
 const ENS_RESOLVER_ABI = [
     "function setText(bytes32 node, string key, string value) external",
-    "function getText(bytes32 node, string key) view returns (string)"
+    "function text(bytes32 node, string key) view returns (string)"
 ];
 let ensNameCache = null;
 
@@ -472,7 +472,7 @@ async function readEnsRecord() {
         // #region agent log
         fetch('http://127.0.0.1:7242/ingest/6cf098c8-b720-49c8-9e5a-8a0c47c861ed',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dashboard.js:readEnsRecord:namehash',message:'ENS namehash computed',data:{ensName:ensNameCache,node},timestamp:Date.now(),runId:'ens-debug',hypothesisId:'H3'})}).catch(()=>{});
         // #endregion agent log
-        const value = await resolverContract.getText(node, ENS_RECORD_KEY);
+        const value = await resolverContract.text(node, ENS_RECORD_KEY);
         if (ensRecordValueEl) ensRecordValueEl.textContent = value || "-";
         setEnsStatus("Record loaded.");
         if (ensRecordUpdated) ensRecordUpdated.textContent = new Date().toLocaleString();
