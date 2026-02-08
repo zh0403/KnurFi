@@ -354,6 +354,8 @@ function useManualEnsName() {
     updateEnsWriteState();
 }
 
+window.knurfiUseManualEnsName = useManualEnsName;
+
 function validateEnsRecordValue(value) {
     if (!value) return "Enter a value to write.";
     if (value.startsWith("0x") && value.length === 66) return null;
