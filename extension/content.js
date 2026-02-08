@@ -2,7 +2,7 @@
 
 // Pre-compute the full URL for the extension icon from the extension context
 // (page scripts like `inpage.js` cannot call `chrome.runtime` directly).
-const MT_ICON_URL = chrome.runtime.getURL('logo_512px.png');
+const KNURFI_ICON_URL = chrome.runtime.getURL('logo_512px_bg_rmved.png');
 
 // 1. Define the order of scripts
 const scripts = ['ethers.js', 'crypto-js.js', 'abi.js', 'inpage.js'];
@@ -19,7 +19,7 @@ function loadScript(index) {
     // When we inject the inpage script into the page context, attach the
     // computed icon URL as a data-attribute so it can read it safely.
     if (file === 'inpage.js') {
-        script.dataset.iconUrl = MT_ICON_URL;
+        script.dataset.iconUrl = KNURFI_ICON_URL;
     }
 
     // WAIT for this script to finish loading before starting the next one
