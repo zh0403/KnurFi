@@ -62,6 +62,7 @@ const bridgeActivity = document.getElementById('bridge-activity');
 const ensNameEl = document.getElementById('ens-name');
 const ensRecordValueEl = document.getElementById('ens-record-value');
 const ensRecordInput = document.getElementById('ens-record-input');
+const ensSaltInput = document.getElementById('ens-salt-input');
 const ensResolveButton = document.getElementById('ens-resolve-btn');
 const ensReadButton = document.getElementById('ens-read-btn');
 const ensWriteButton = document.getElementById('ens-write-btn');
@@ -71,6 +72,8 @@ const ensNetworkHint = document.getElementById('ens-network-hint');
 const ensCopyNameButton = document.getElementById('ens-copy-name');
 const ensCopyRecordButton = document.getElementById('ens-copy-record');
 const ensGenerateHashButton = document.getElementById('ens-generate-hash');
+const ensGenerateSaltButton = document.getElementById('ens-generate-salt');
+const ensCopySaltButton = document.getElementById('ens-copy-salt');
 const ensRecordUpdated = document.getElementById('ens-record-updated');
 
 const ENS_RECORD_KEY = "com.knurfi.metadata";
@@ -293,13 +296,47 @@ function copyEnsValue(value) {
 function generateEnsHash() {
     if (!ensRecordInput) return;
     const text = ensRecordInput.value.trim();
+    const salt = ensSaltInput ? ensSaltInput.value.trim() : "";
     if (!text) {
         setEnsStatus("Enter text to hash first.", true);
         return;
     }
-    const hash = ethers.keccak256(ethers.toUtf8Bytes(text));
+    if (!salt) {
+        setEnsStatus("Generate or paste a salt before hashing.", true);
+        return;
+    }
+    const hashInput = `${salt}:${text}`;
+    const hash = ethers.keccak256(ethers.toUtf8Bytes(hashInput));
     ensRecordInput.value = hash;
-    setEnsStatus("Hash generated.");
+    setEnsStatus("Salted hash generated.");
+}
+
+function generateEnsSalt() {
+    if (!ensSaltInput) return;
+    if (window.crypto && window.crypto.getRandomValues) {
+        const bytes = new Uint8Array(16);
+        window.crypto.getRandomValues(bytes);
+        ensSaltInput.value = Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
+    } else {
+        ensSaltInput.value = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    }
+    setEnsStatus("Salt generated.");
+}
+
+function copyEnsSalt() {
+    if (!ensSaltInput) return;
+    const value = ensSaltInput.value.trim();
+    if (!value) {
+        setEnsStatus("No salt to copy yet.", true);
+        return;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(value).then(() => {
+            setEnsStatus("Salt copied to clipboard.");
+        }).catch(() => setEnsStatus("Failed to copy salt.", true));
+    } else {
+        setEnsStatus("Clipboard not available.", true);
+    }
 }
 
 function validateEnsRecordValue(value) {
@@ -360,7 +397,7 @@ async function resolveEnsName() {
         if (!name) {
             ensNameCache = null;
             if (ensNameEl) ensNameEl.textContent = "No ENS name found";
-            setEnsStatus("No ENS name found on Sepolia. Mainnet ENS names won't appear here.");
+            setEnsStatus("No ENS name found on Sepolia. Set a primary name (reverse record) in ENS Manager.");
             updateEnsWriteState();
             return;
         }
@@ -522,6 +559,12 @@ function initializeEns() {
     }
     if (ensGenerateHashButton) {
         ensGenerateHashButton.onclick = generateEnsHash;
+    }
+    if (ensGenerateSaltButton) {
+        ensGenerateSaltButton.onclick = generateEnsSalt;
+    }
+    if (ensCopySaltButton) {
+        ensCopySaltButton.onclick = copyEnsSalt;
     }
     updateEnsWriteState();
     if (window.ethereum && window.ethereum.on) {

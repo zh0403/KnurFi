@@ -230,10 +230,18 @@
                         <label for="ens-record-input" class="text-slate-400 text-xs">New Record Value</label>
                         <input id="ens-record-input" type="text" placeholder="Paste metadata hash"
                             style="margin-top:6px; width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:#0f172a; color:#e5e7eb;">
+                        <label for="ens-salt-input" class="text-slate-400 text-xs" style="margin-top:10px; display:block;">Salt (keep private)</label>
+                        <input id="ens-salt-input" type="text" placeholder="Generate or paste a salt"
+                            style="margin-top:6px; width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:#0f172a; color:#e5e7eb;">
                         <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
                             <button id="ens-generate-hash" class="btn btn-outline" style="padding:6px 12px;">Generate Hash</button>
+                            <button id="ens-generate-salt" class="btn btn-outline" style="padding:6px 12px;">Generate Salt</button>
+                            <button id="ens-copy-salt" class="btn btn-outline" style="padding:6px 12px;">Copy Salt</button>
                             <span class="text-slate-400 text-xs" style="padding:2px 8px; border-radius:999px; border:1px solid var(--border);">Network: Sepolia</span>
                             <span class="text-slate-400 text-xs" title="Expected format: 32-byte hex hash (0x + 64 hex chars).">Hash format?</span>
+                        </div>
+                        <div class="text-slate-400 text-xs" style="margin-top:6px;">
+                            Hash is computed from <span style="color:#e2e8f0;">salt + metadata</span> to protect against guessing.
                         </div>
                     </div>
                     <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
