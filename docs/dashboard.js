@@ -60,6 +60,7 @@ const bridgeStatus = document.getElementById('bridge-status');
 const bridgeActivity = document.getElementById('bridge-activity');
 
 const ensNameEl = document.getElementById('ens-name');
+const ensNameInput = document.getElementById('ens-name-input');
 const ensRecordValueEl = document.getElementById('ens-record-value');
 const ensRecordInput = document.getElementById('ens-record-input');
 const ensSaltInput = document.getElementById('ens-salt-input');
@@ -74,6 +75,7 @@ const ensCopyRecordButton = document.getElementById('ens-copy-record');
 const ensGenerateHashButton = document.getElementById('ens-generate-hash');
 const ensGenerateSaltButton = document.getElementById('ens-generate-salt');
 const ensCopySaltButton = document.getElementById('ens-copy-salt');
+const ensUseNameButton = document.getElementById('ens-use-name');
 const ensRecordUpdated = document.getElementById('ens-record-updated');
 
 const ENS_RECORD_KEY = "com.knurfi.metadata";
@@ -339,6 +341,19 @@ function copyEnsSalt() {
     }
 }
 
+function useManualEnsName() {
+    if (!ensNameInput) return;
+    const name = ensNameInput.value.trim();
+    if (!name) {
+        setEnsStatus("Enter an ENS name first.", true);
+        return;
+    }
+    ensNameCache = name;
+    if (ensNameEl) ensNameEl.textContent = name;
+    setEnsStatus("Using manual ENS name. You can now read/write records.");
+    updateEnsWriteState();
+}
+
 function validateEnsRecordValue(value) {
     if (!value) return "Enter a value to write.";
     if (value.startsWith("0x") && value.length === 66) return null;
@@ -565,6 +580,9 @@ function initializeEns() {
     }
     if (ensCopySaltButton) {
         ensCopySaltButton.onclick = copyEnsSalt;
+    }
+    if (ensUseNameButton) {
+        ensUseNameButton.onclick = useManualEnsName;
     }
     updateEnsWriteState();
     if (window.ethereum && window.ethereum.on) {

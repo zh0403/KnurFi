@@ -226,6 +226,15 @@
                             <button id="ens-copy-record" class="btn btn-outline" style="margin-top:10px; padding:6px 12px;">Copy Record</button>
                         </div>
                     </div>
+                    <div style="margin-top:12px;">
+                        <label for="ens-name-input" class="text-slate-400 text-xs">ENS Name (manual)</label>
+                        <input id="ens-name-input" type="text" placeholder="example.sepolia.eth"
+                            style="margin-top:6px; width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:#0f172a; color:#e5e7eb;">
+                        <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+                            <button id="ens-use-name" class="btn btn-outline" style="padding:6px 12px;">Use This Name</button>
+                            <a href="https://app.ens.domains/" target="_blank" rel="noopener" class="text-slate-400 text-xs" style="align-self:center;">Set primary name in ENS Manager</a>
+                        </div>
+                    </div>
                     <div style="margin-top:14px;">
                         <label for="ens-record-input" class="text-slate-400 text-xs">New Record Value</label>
                         <input id="ens-record-input" type="text" placeholder="Paste metadata hash"
