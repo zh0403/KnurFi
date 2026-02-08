@@ -456,7 +456,14 @@ async function readEnsRecord() {
             setEnsStatus("No resolver set for this ENS name.", true);
             return;
         }
-        const value = await resolver.getText(ENS_RECORD_KEY);
+        const resolverAddress = resolver.address || resolver._address;
+        if (!resolverAddress) {
+            setEnsStatus("Resolver address not available.", true);
+            return;
+        }
+        const resolverContract = new ethers.Contract(resolverAddress, ENS_RESOLVER_ABI, provider);
+        const node = ethers.namehash(ensNameCache);
+        const value = await resolverContract.getText(node, ENS_RECORD_KEY);
         if (ensRecordValueEl) ensRecordValueEl.textContent = value || "-";
         setEnsStatus("Record loaded.");
         if (ensRecordUpdated) ensRecordUpdated.textContent = new Date().toLocaleString();
