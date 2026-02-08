@@ -1,6 +1,6 @@
 import React from "https://esm.sh/react@18.2.0";
 import { createRoot } from "https://esm.sh/react-dom@18.2.0/client";
-import { LiFiWidget } from "https://esm.sh/@lifi/widget@3.6.4?deps=react@18.2.0,react-dom@18.2.0";
+import { LiFiWidget } from "https://esm.sh/@lifi/widget@3.19.2";
 
 const rootEl = document.getElementById("lifi-widget-root");
 const errorEl = document.getElementById("lifi-widget-error");
