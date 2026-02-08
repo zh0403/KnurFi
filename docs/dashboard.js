@@ -94,7 +94,7 @@ const ENS_RESOLVER_ABI = [
 let ensNameCache = null;
 
 const BRIDGE_STORAGE_KEY = "knurfiBridgeActivity";
-const LIFI_WIDGET_BASE_URL = "https://widget.li.fi/?integrator=KnurFi";
+const LIFI_WIDGET_BASE_URL = "bridge-widget/dist/index.html";
 
 let payoutRecipients = [];
 let payoutAmounts = [];
@@ -712,8 +712,7 @@ function setBridgeStatus(message, isError) {
 
 function getBridgeWidgetUrl() {
     try {
-        const url = new URL(LIFI_WIDGET_BASE_URL);
-        url.searchParams.set("integrator", "KnurFi");
+        const url = new URL(LIFI_WIDGET_BASE_URL, window.location.href);
         if (currentAddress) {
             url.searchParams.set("toAddress", currentAddress);
         }
