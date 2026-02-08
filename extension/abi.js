@@ -1,5 +1,5 @@
 // abi.js
-window.MT_NOTE_ABI = [
+window.KNURFI_ABI = [
   {
     "inputs": [],
     "stateMutability": "nonpayable",

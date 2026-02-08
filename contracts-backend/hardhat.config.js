@@ -17,20 +17,5 @@ module.exports = {
       accounts: arcKey ? [arcKey] : [], // Loads from .env
       chainId: 5042002
     }
-  },
-  etherscan: {
-    apiKey: {
-      arcTestnet: process.env.ARC_SCAN_API_KEY || "arcscan"
-    },
-    customChains: [
-      {
-        network: "arcTestnet",
-        chainId: 5042002,
-        urls: {
-          apiURL: "https://testnet.arcscan.app/api",
-          browserURL: "https://testnet.arcscan.app"
-        }
-      }
-    ]
   }
 };
