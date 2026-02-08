@@ -80,6 +80,7 @@ const ensRecordUpdated = document.getElementById('ens-record-updated');
 
 const ENS_RECORD_KEY = "com.knurfi.metadata";
 const ENS_RPC_URL = "https://rpc.ankr.com/eth_sepolia";
+const ENS_REGISTRY_ADDRESS = "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e";
 let ensNameCache = null;
 
 const BRIDGE_STORAGE_KEY = "knurfiBridgeActivity";
@@ -363,7 +364,11 @@ function validateEnsRecordValue(value) {
 }
 
 function getEnsReadProvider() {
-    return new ethers.JsonRpcProvider(ENS_RPC_URL);
+    return new ethers.JsonRpcProvider(ENS_RPC_URL, {
+        name: "sepolia",
+        chainId: 11155111,
+        ensAddress: ENS_REGISTRY_ADDRESS
+    });
 }
 
 async function ensureEnsWalletChain() {
@@ -398,7 +403,11 @@ async function getEnsSigner() {
         return null;
     }
     await ensureEnsWalletChain();
-    const ensProvider = new ethers.BrowserProvider(window.ethereum);
+    const ensProvider = new ethers.BrowserProvider(window.ethereum, {
+        name: "sepolia",
+        chainId: 11155111,
+        ensAddress: ENS_REGISTRY_ADDRESS
+    });
     await ensProvider.send("eth_requestAccounts", []);
     return ensProvider.getSigner();
 }
