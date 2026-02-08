@@ -79,7 +79,7 @@ const ensUseNameButton = document.getElementById('ens-use-name');
 const ensRecordUpdated = document.getElementById('ens-record-updated');
 
 const ENS_RECORD_KEY = "com.knurfi.metadata";
-const ENS_RPC_URL = "https://rpc.ankr.com/eth_sepolia";
+const ENS_RPC_URL = "https://ethereum-sepolia.publicnode.com";
 const ENS_REGISTRY_ADDRESS = "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e";
 const ENS_RESOLVER_ABI = [
     "function setText(bytes32 node, string key, string value) external",
@@ -445,6 +445,9 @@ async function readEnsRecord() {
         setEnsStatus("Connect your wallet first.", true);
         return;
     }
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/6cf098c8-b720-49c8-9e5a-8a0c47c861ed',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dashboard.js:readEnsRecord:entry',message:'ENS read start',data:{hasAddress:!!currentAddress,ensNameCache:ensNameCache||null,rpc:ENS_RPC_URL},timestamp:Date.now(),runId:'ens-debug',hypothesisId:'H1'})}).catch(()=>{});
+    // #endregion agent log
     try {
         if (!ensNameCache) {
             await resolveEnsName();
@@ -461,13 +464,22 @@ async function readEnsRecord() {
             setEnsStatus("Resolver address not available.", true);
             return;
         }
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/6cf098c8-b720-49c8-9e5a-8a0c47c861ed',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dashboard.js:readEnsRecord:resolver',message:'Resolver info',data:{ensName:ensNameCache,resolverAddress},timestamp:Date.now(),runId:'ens-debug',hypothesisId:'H2'})}).catch(()=>{});
+        // #endregion agent log
         const resolverContract = new ethers.Contract(resolverAddress, ENS_RESOLVER_ABI, provider);
         const node = ethers.namehash(ensNameCache);
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/6cf098c8-b720-49c8-9e5a-8a0c47c861ed',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dashboard.js:readEnsRecord:namehash',message:'ENS namehash computed',data:{ensName:ensNameCache,node},timestamp:Date.now(),runId:'ens-debug',hypothesisId:'H3'})}).catch(()=>{});
+        // #endregion agent log
         const value = await resolverContract.getText(node, ENS_RECORD_KEY);
         if (ensRecordValueEl) ensRecordValueEl.textContent = value || "-";
         setEnsStatus("Record loaded.");
         if (ensRecordUpdated) ensRecordUpdated.textContent = new Date().toLocaleString();
     } catch (e) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/6cf098c8-b720-49c8-9e5a-8a0c47c861ed',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dashboard.js:readEnsRecord:error',message:'ENS read error',data:{error:(e && (e.shortMessage||e.reason||e.message))||'unknown'},timestamp:Date.now(),runId:'ens-debug',hypothesisId:'H4'})}).catch(()=>{});
+        // #endregion agent log
         setEnsStatus("Failed to read ENS record.", true);
     }
 }
@@ -477,6 +489,9 @@ async function writeEnsRecord() {
         setEnsStatus("Connect your wallet first.", true);
         return;
     }
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/6cf098c8-b720-49c8-9e5a-8a0c47c861ed',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dashboard.js:writeEnsRecord:entry',message:'ENS write start',data:{hasAddress:!!currentAddress,ensNameCache:ensNameCache||null,chainId:window.ethereum && window.ethereum.chainId},timestamp:Date.now(),runId:'ens-debug',hypothesisId:'H1'})}).catch(()=>{});
+    // #endregion agent log
     if (window.ethereum && window.ethereum.chainId !== "0xaa36a7") {
         setEnsStatus("Switching to Ethereum Sepolia...");
         try {
@@ -512,8 +527,14 @@ async function writeEnsRecord() {
             setEnsStatus("Resolver address not available.", true);
             return;
         }
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/6cf098c8-b720-49c8-9e5a-8a0c47c861ed',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dashboard.js:writeEnsRecord:resolver',message:'Resolver info',data:{ensName:ensNameCache,resolverAddress},timestamp:Date.now(),runId:'ens-debug',hypothesisId:'H2'})}).catch(()=>{});
+        // #endregion agent log
         const resolverContract = new ethers.Contract(resolverAddress, ENS_RESOLVER_ABI, signer);
         const node = ethers.namehash(ensNameCache);
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/6cf098c8-b720-49c8-9e5a-8a0c47c861ed',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dashboard.js:writeEnsRecord:namehash',message:'ENS namehash computed',data:{ensName:ensNameCache,node,recordKey:ENS_RECORD_KEY},timestamp:Date.now(),runId:'ens-debug',hypothesisId:'H3'})}).catch(()=>{});
+        // #endregion agent log
         setEnsStatus("Submitting ENS record update...");
         const tx = await resolverContract.setText(node, ENS_RECORD_KEY, ensRecordInput.value.trim());
         setEnsStatus(`ENS update submitted: ${tx.hash}`);
@@ -531,6 +552,9 @@ async function writeEnsRecord() {
         if (raw.includes("user rejected") || raw.includes("user denied")) {
             message = "Transaction was rejected in the wallet.";
         }
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/6cf098c8-b720-49c8-9e5a-8a0c47c861ed',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dashboard.js:writeEnsRecord:error',message:'ENS write error',data:{error:(e && (e.shortMessage||e.reason||e.message))||'unknown'},timestamp:Date.now(),runId:'ens-debug',hypothesisId:'H4'})}).catch(()=>{});
+        // #endregion agent log
         setEnsStatus(message, true);
     }
 }
