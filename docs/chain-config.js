@@ -2,7 +2,7 @@ window.KNURFI_CHAINS = {
     sepolia: {
         name: "Ethereum Sepolia",
         chainId: 11155111,
-        rpcUrl: "https://rpc.sepolia.org",
+        rpcUrl: "https://rpc.ankr.com/eth_sepolia",
         explorer: "https://sepolia.etherscan.io",
         contractAddress: window.KNURFI_ADDRESS || "0x3489864DC6ea7440FA54472662A50Bb26BBDD13F",
         nativeCurrency: { name: "Sepolia ETH", symbol: "ETH", decimals: 18 },
