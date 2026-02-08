@@ -80,6 +80,7 @@ const ensRecordUpdated = document.getElementById('ens-record-updated');
 
 const ENS_RECORD_KEY = "com.knurfi.metadata";
 const ENS_RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
+const ENS_MAINNET_RPC_URL = "https://cloudflare-eth.com";
 const ENS_REGISTRY_ADDRESS = "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e";
 const ENS_RESOLVER_ABI = [
     "function setText(bytes32 node, string key, string value) external",
@@ -375,6 +376,14 @@ function getEnsReadProvider() {
     });
 }
 
+function getEnsMainnetProvider() {
+    return new ethers.JsonRpcProvider(ENS_MAINNET_RPC_URL, {
+        name: "homestead",
+        chainId: 1,
+        ensAddress: ENS_REGISTRY_ADDRESS
+    });
+}
+
 async function ensureEnsWalletChain() {
     const hexChainId = "0xaa36a7";
     try {
@@ -422,7 +431,7 @@ async function resolveEnsName() {
         return;
     }
     try {
-        const provider = getEnsReadProvider();
+        const provider = getEnsMainnetProvider();
         const name = await provider.lookupAddress(currentAddress);
         if (!name) {
             ensNameCache = null;
