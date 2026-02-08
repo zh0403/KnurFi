@@ -81,6 +81,10 @@ const ensRecordUpdated = document.getElementById('ens-record-updated');
 const ENS_RECORD_KEY = "com.knurfi.metadata";
 const ENS_RPC_URL = "https://rpc.ankr.com/eth_sepolia";
 const ENS_REGISTRY_ADDRESS = "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e";
+const ENS_RESOLVER_ABI = [
+    "function setText(bytes32 node, string key, string value) external",
+    "function getText(bytes32 node, string key) view returns (string)"
+];
 let ensNameCache = null;
 
 const BRIDGE_STORAGE_KEY = "knurfiBridgeActivity";
@@ -496,8 +500,15 @@ async function writeEnsRecord() {
             setEnsStatus("No resolver set for this ENS name.", true);
             return;
         }
+        const resolverAddress = resolver.address || resolver._address;
+        if (!resolverAddress) {
+            setEnsStatus("Resolver address not available.", true);
+            return;
+        }
+        const resolverContract = new ethers.Contract(resolverAddress, ENS_RESOLVER_ABI, signer);
+        const node = ethers.namehash(ensNameCache);
         setEnsStatus("Submitting ENS record update...");
-        const tx = await resolver.connect(signer).setText(ensNameCache, ENS_RECORD_KEY, ensRecordInput.value.trim());
+        const tx = await resolverContract.setText(node, ENS_RECORD_KEY, ensRecordInput.value.trim());
         setEnsStatus(`ENS update submitted: ${tx.hash}`);
         await tx.wait();
         setEnsStatus("ENS record updated.");
