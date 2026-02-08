@@ -77,7 +77,7 @@ const ensCopySaltButton = document.getElementById('ens-copy-salt');
 const ensRecordUpdated = document.getElementById('ens-record-updated');
 
 const ENS_RECORD_KEY = "com.knurfi.metadata";
-const ENS_RPC_URL = "https://rpc.sepolia.org";
+const ENS_RPC_URL = "https://rpc.ankr.com/eth_sepolia";
 let ensNameCache = null;
 
 const BRIDGE_STORAGE_KEY = "knurfiBridgeActivity";
